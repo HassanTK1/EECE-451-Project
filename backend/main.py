@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from datetime import datetime
+from datetime import datetime,UTC
 from schema import *
 
 app = FastAPI()
@@ -18,7 +18,7 @@ devices = {}
 def identify(body: Identification_request):
     if body.device_id in devices:
         first_seen = devices[body.device_id]["first_seen"]
-        last_seen=datetime.now()
+        last_seen=datetime.now(UTC)
         devices[body.device_id]["last_seen"] = last_seen
         first_meet=False
         
@@ -50,10 +50,10 @@ def resp_measurements(device_id: str,body:Measurements_request):
         "SNR ": body.SNR,
         "network_type": body.network_type,
         "frequency_band": body.frequency_band, 
-        "Cell_id": body.Cell_id ,
-        "time_stamp": datetime.now()})
+        "Cell_id": body.cell_id ,
+        "time_stamp": datetime.now(UTC)})
     
-    return Measuremnents_response(status="ok", 
+    return Measurements_response(status="ok", 
                                  measurement_num =len(measure[device_id]),
                                                                    
-                                  server_time=datetime.now())
+                                  server_time=datetime.now(UTC))
