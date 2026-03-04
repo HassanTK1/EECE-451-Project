@@ -25,7 +25,7 @@ class Measurements_request(BaseModel):
     device_id: str
     operator: str
     signal_power: int # in decibels
-    SNR : double[Optional] = None
+    SNR : int[Optional] = None
     network_type: Literal["2G","3G","4G"]   ### FOCUS - type might be better categorized
     frequency_band: int # review data format
     cell_id: str # maybe str 
