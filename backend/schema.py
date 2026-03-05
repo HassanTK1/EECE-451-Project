@@ -22,7 +22,6 @@ class Identification_response(BaseModel):
 
 
 class Measurements_request(BaseModel):
-    device_id: str
     operator: str
     signal_power: int # in decibels
     SNR : Optional[int] = None
