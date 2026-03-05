@@ -27,7 +27,7 @@ class Measurements_request(BaseModel):
     signal_power: int # in decibels
     SNR : Optional[int] = None
     network_type: Literal["2G","3G","4G"]   ### FOCUS - type might be better categorized
-    frequency_band: int # review data format
+    frequency_band: Optional[int] = None # review data format
     cell_id: str # maybe str 
     time_stamp: datetime    
 
