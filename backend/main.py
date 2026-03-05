@@ -25,7 +25,7 @@ def identify(body: Identification_request):
         
     else:
         first_meet=True
-        first_seen=last_seen=datetime.now()
+        first_seen=last_seen=datetime.now(UTC)
         devices[body.device_id] = {
     "first_seen": first_seen,
     "last_seen": last_seen,
