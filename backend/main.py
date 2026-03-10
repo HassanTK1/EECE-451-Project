@@ -58,3 +58,29 @@ def resp_measurements(body:Measurements_request):
                                  measurement_num =len(measure[device_id]),
                                                                    
                                   server_time=datetime.now(UTC))
+
+
+
+
+@app.get("/stats")
+def get_stats(from_date: datetime, to_date: datetime):
+    filtered = []
+
+    for device_id, records in measure.items():
+        for record in records:
+            if from_date <= record["time_stamp"] <= to_date:
+                filtered.append({
+                    "device_id": device_id,
+                    "operator": record["operator"],
+                    "network_type": record["network_type"],
+                    "signal_power": record["signal_power"],
+                    "SNR": record["SNR"],
+                    "time_stamp": record["time_stamp"]
+                })
+
+    return {
+        "from_date": from_date,
+        "to_date": to_date,
+        "count": len(filtered),
+        "measurements": filtered
+    }
