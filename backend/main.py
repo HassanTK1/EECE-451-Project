@@ -40,7 +40,8 @@ def identify(body: Identification_request):
        
 measure={}    
 @app.post("/measurements")
-def resp_measurements(device_id: str,body:Measurements_request):
+def resp_measurements(body:Measurements_request):
+    device_id = body.device_id
     if device_id not in measure:
         measure[device_id] = []
 
@@ -50,7 +51,7 @@ def resp_measurements(device_id: str,body:Measurements_request):
         "SNR ": body.SNR,
         "network_type": body.network_type,
         "frequency_band": body.frequency_band, 
-        "Cell_id": body.cell_id ,
+        "cell_id": body.cell_id ,
         "time_stamp": datetime.now(UTC)})
     
     return Measurements_response(status="ok", 
