@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine,Column,String,DateTime,Boolean,Integer,Float,ForeignKey
 from sqlalchemy.orm import sessionmaker,declarative_base
 
-DATABASE_URL = "postgresql://postgres:Garod2005@localhost:5432/network_analyzer" #postgresql://username:password@host:port/database_name (this is the format , replace with your own values )
+DATABASE_URL = #postgresql://username:password@host:port/database_name (this is the format , replace with your own values )
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
@@ -34,4 +34,5 @@ class Measurement(Base):
     
     
 Base.metadata.create_all(bind=engine)
+
     
