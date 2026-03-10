@@ -24,7 +24,7 @@ class Identification_response(BaseModel):
 class Measurements_request(BaseModel):
     operator: str
     signal_power: int # in decibels
-    SNR : Optional[int] = None
+    SNR : Optional[float] = None
     network_type: Literal["2G","3G","4G"]   ### FOCUS - type might be better categorized
     frequency_band: Optional[int] = None # review data format
     cell_id: str # maybe str 
