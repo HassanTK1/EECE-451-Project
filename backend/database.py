@@ -21,7 +21,7 @@ class Device(Base):
 class Measurement(Base):
     __tablename__ = "measure"
 
-    device_id = Column(String, ForeignKey("devices.device_id")) ##ForeignKey checks if the id in the 'devices' tabel , if not it rejects it 
+    device_id = Column(String, ForeignKey("devices.device_id")) ##ForeignKey checks if the id in the 'devices' table , if not it rejects it 
     operator=Column(String)
     signal_power=Column(Integer)
     SNR=Column(Float,nullable=True)
@@ -36,3 +36,4 @@ class Measurement(Base):
 Base.metadata.create_all(bind=engine)
 
     
+
