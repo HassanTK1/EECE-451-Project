@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from datetime import datetime,UTC
 from schema import *
+from database import *
 
 app = FastAPI()
 
@@ -13,24 +14,36 @@ def health():
     return { "status":"ok"}
 
 
-devices = {}
+
 @app.post("/identification")
 def identify(body: Identification_request):
-    if body.device_id in devices:
-        first_seen = devices[body.device_id]["first_seen"]
+    db = SessionLocal()
+    device = db.query(Device).filter(Device.device_id == body.device_id).first()
+    if device!=None :
+        first_seen = device.first_seen
         last_seen=datetime.now(UTC)
-        devices[body.device_id]["last_seen"] = last_seen
-        first_meet=False
+        device.last_seen = last_seen
+        first_meet = False 
+        mac_address=body.mac_address
+        device.mac_address=mac_address
+        device.first_meet=False
+        db.commit()
         
         
     else:
         first_meet=True
+    
         first_seen=last_seen=datetime.now(UTC)
-        devices[body.device_id] = {
-    "first_seen": first_seen,
-    "last_seen": last_seen,
-    "mac_address": body.mac_address,
-    "first_meet": True}
+        new_device = Device(
+    device_id=body.device_id,
+    mac_address=body.mac_address,
+    first_seen=first_seen,
+    last_seen=last_seen,
+    first_meet=True
+)
+        db.add(new_device)
+        db.commit()
+    db.close()
         
     return Identification_response(
         device_id=body.device_id,
@@ -38,24 +51,30 @@ def identify(body: Identification_request):
         last_seen=last_seen,
         first_meet=first_meet)
        
-measure={}    
+  
 @app.post("/measurements")
-def resp_measurements(body:Measurements_request):
-    device_id = body.device_id
-    if device_id not in measure:
-        measure[device_id] = []
+def resp_measurements(device_id:str,body:Measurements_request):
+    db=SessionLocal()
 
-    measure[device_id].append({
-        "operator": body.operator,
-        "signal_power": body.signal_power,
-        "SNR ": body.SNR,
-        "network_type": body.network_type,
-        "frequency_band": body.frequency_band, 
-        "cell_id": body.cell_id ,
-        "time_stamp": datetime.now(UTC)})
+    new_Measurment=Measurement(
+            device_id = device_id, 
+            operator=body.operator,
+            signal_power=body.signal_power,
+            SNR=body.SNR,
+            network_type=body.network_type,
+            frequency_band=body.frequency_band,
+            cell_id=body.cell_id,
+            time_stamp=body.time_stamp,
+            
+        )
+        
+    db.add(new_Measurment)
+    db.commit()
+    num=db.query(Measurement).filter(Measurement.device_id == device_id).count()
+    db.close()
     
     return Measurements_response(status="ok", 
-                                 measurement_num =len(measure[device_id]),
+                                 measurement_num = num,
                                                                    
                                   server_time=datetime.now(UTC))
 
