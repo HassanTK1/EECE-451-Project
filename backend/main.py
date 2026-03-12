@@ -83,9 +83,15 @@ def resp_measurements(device_id:str,body:Measurements_request):
 
 @app.get("/stats")
 def get_stats(from_date: datetime, to_date: datetime):
+
+    db = SessionLocal()
+    records = db.query(Measurement).filter(
+        Measurement.time_stamp >= from_date,
+        Measurement.time_stamp <= to_date
+    ).all()
+
     filtered = []
 
-    for device_id, records in measure.items():
         for record in records:
             if from_date <= record["time_stamp"] <= to_date:
                 filtered.append({
@@ -96,6 +102,7 @@ def get_stats(from_date: datetime, to_date: datetime):
                     "SNR": record["SNR"],
                     "time_stamp": record["time_stamp"]
                 })
+        db.close()
 
     return {
         "from_date": from_date,
