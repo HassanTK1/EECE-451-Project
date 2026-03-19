@@ -13,3 +13,4 @@ NOTE : NGROK LINK IS ONLY VALID FOR A SINGLE SESSION
 
 
 NOTE 2 , the gradle file is stock, with the addition of the retrofit tool dependencies, network and model are mirror of server side APIs and SCHEMA 
+retrofit intro (youtube vid super helpful, all we need from retrofit) LINK: https://youtu.be/iIjHHZNb_Qk?si=Uocd51AenRf_j8kO
