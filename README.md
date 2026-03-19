@@ -10,3 +10,6 @@ to launch ngrok
 5) to check visit the forwarding link, mine is "https://clyde-colourational-saundra.ngrok-free.dev/" 
 6) the goal is to use this url as a deployed server
 NOTE : NGROK LINK IS ONLY VALID FOR A SINGLE SESSION
+
+
+NOTE 2 , the gradle file is stock, with the addition of the retrofit tool dependencies, network and model are mirror of server side APIs and SCHEMA 
