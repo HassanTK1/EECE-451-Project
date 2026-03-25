@@ -2,3 +2,7 @@
 <resources>
     <style name="Theme.NetworkCellAnalyzer" parent="Theme.AppCompat.Light.NoActionBar" />
 </resources>
+
+<!-- res/
+         └── values/
+                   └── themes.xml  ← change this -->
