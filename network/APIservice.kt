@@ -22,11 +22,11 @@ interface APIservice{
         @Body body : IdentificationRequest
     ) : Call<IdentificationResponse>
 
-    @POST("/measurement")
+    @POST("/measurements")
     fun sendMetrics(
-        @Body body : MeasurementRequest
-    ) : Call<MeasurementResponse>
-
+        @Query("device_id") deviceId: String,
+        @Body body: MeasurementRequest
+    ): Call<MeasurementResponse>
 
 
 }
