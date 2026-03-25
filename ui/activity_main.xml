@@ -265,7 +265,7 @@
         android:text="View Stats"
         android:textSize="18sp"
         android:backgroundTint="#2A2A2A"
-        android:cornerRadius="12dp"
+        
         android:layout_weight="1"
         android:textColor="#FFFFFF"/>
 
