@@ -6,7 +6,7 @@ data class MeasurementRequest (
     val signal_power : Int,
     val SNR : Float?,
     val network_type: String,
-    val frequency_band: Int,
+    val frequency_band: Int?,
     val cell_id: String,
     val time_stamp: String
 
