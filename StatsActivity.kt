@@ -44,19 +44,19 @@ class StatsActivity : AppCompatActivity() {
         pb3G = findViewById(R.id.pb3G)
         pb2G = findViewById(R.id.pb2G)
 
-        // From card click → show date picker
+       
         tvFrom.setOnClickListener { showDatePicker { date ->
             fromDate = date
             tvFrom.text = date
         }}
 
-        // To card click → show date picker
+        
         tvTo.setOnClickListener { showDatePicker { date ->
             toDate = date
             tvTo.text = date
         }}
 
-        // Back button
+        
         findViewById<Button>(R.id.btnBack).setOnClickListener {
             finish()
         }
