@@ -1,4 +1,5 @@
 package com.example.networkcellanalyzer.telephony
+
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
@@ -7,6 +8,14 @@ import android.telephony.CellInfoGsm
 import android.telephony.CellInfoWcdma
 import android.telephony.CellInfoLte
 import com.example.networkcellanalyzer.model.MeasurementRequest
+import java.time.Instant
+
+// this function gives the format so that it matches fastAPI
+fun getCurrentTimestamp(): String {
+    return Instant.now().toString()
+        .replace("T", " ")
+        .replace("Z", "")
+}
 
 @SuppressLint("MissingPermission")
 fun readMeasurementFromPhone(context: Context, deviceId: String): MeasurementRequest? {
@@ -21,13 +30,12 @@ fun readMeasurementFromPhone(context: Context, deviceId: String): MeasurementReq
 
     val cell = cellList[0]
 
-
-    //4G
+    // 4G
     if (cell is CellInfoLte) {
         val signal = cell.cellSignalStrength
         var snr: Float? = null
         var band: Int? = null
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {              //adnroid11 and above
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             snr = signal.rssnr.toFloat()
             band = cell.cellIdentity.bands.firstOrNull()
         }
@@ -39,10 +47,10 @@ fun readMeasurementFromPhone(context: Context, deviceId: String): MeasurementReq
             network_type = "4G",
             frequency_band = band,
             cell_id = cell.cellIdentity.ci.toString(),
-            time_stamp = System.currentTimeMillis().toString()
+            time_stamp = getCurrentTimestamp()
         )
     }
-    //3G
+    // 3G
     else if (cell is CellInfoWcdma) {
         val signal = cell.cellSignalStrength
         return MeasurementRequest(
@@ -53,10 +61,10 @@ fun readMeasurementFromPhone(context: Context, deviceId: String): MeasurementReq
             network_type = "3G",
             frequency_band = null,
             cell_id = cell.cellIdentity.cid.toString(),
-            time_stamp = System.currentTimeMillis().toString()
+            time_stamp = getCurrentTimestamp()
         )
     }
-    //2G
+    // 2G
     else if (cell is CellInfoGsm) {
         val signal = cell.cellSignalStrength
         return MeasurementRequest(
@@ -67,7 +75,7 @@ fun readMeasurementFromPhone(context: Context, deviceId: String): MeasurementReq
             network_type = "2G",
             frequency_band = null,
             cell_id = cell.cellIdentity.cid.toString(),
-            time_stamp = System.currentTimeMillis().toString()
+            time_stamp = getCurrentTimestamp()
         )
     }
     else {
