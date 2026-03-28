@@ -1,4 +1,4 @@
-package com.example.networkcellanalyzer
+package com.example.a451_app
 
 import android.content.Intent
 import android.os.Bundle
@@ -11,19 +11,20 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import com.example.networkcellanalyzer.model.HealthResponse
-import com.example.networkcellanalyzer.model.IdentificationRequest
-import com.example.networkcellanalyzer.model.IdentificationResponse
-import com.example.networkcellanalyzer.model.MeasurementRequest
-import com.example.networkcellanalyzer.model.MeasurementResponse
-import com.example.networkcellanalyzer.network.RetrofitClient
-import com.example.networkcellanalyzer.telephony.readMeasurementFromPhone
+import com.example.a451_app.model.HealthResponse
+import com.example.a451_app.model.IdentificationRequest
+import com.example.a451_app.model.IdentificationResponse
+import com.example.a451_app.model.MeasurementRequest
+import com.example.a451_app.model.MeasurementResponse
+import com.example.a451_app.network.RetrofitClient
+import com.example.a451_app.readMeasurementFromPhone
+import com.example.a451_app.IDmanager
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
 class MainActivity : AppCompatActivity() {
-
+    private lateinit var deviceId: String
     private lateinit var tvServerStatus: TextView
     private lateinit var tvOperator: TextView
     private lateinit var tvNetwork: TextView
@@ -32,7 +33,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvCellid: TextView
     private lateinit var tvBand: TextView
 
-    private val deviceId = "device_12"
+
 
     private val handler = Handler(Looper.getMainLooper())
     private val interval = 3000L
@@ -57,7 +58,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
+        deviceId = IDmanager(this).checkId()
         tvServerStatus = findViewById(R.id.tvServerStatus)
         tvOperator = findViewById(R.id.tvOperator)
         tvNetwork = findViewById(R.id.tvNetwork)
@@ -137,7 +138,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun sendMeasurementToServer(measurement: MeasurementRequest) {
-        RetrofitClient.apiService.sendMetrics(measurement.device_id, measurement)
+        RetrofitClient.apiService.sendMetrics( deviceId,measurement)
             .enqueue(object : Callback<MeasurementResponse> {
                 override fun onResponse(call: Call<MeasurementResponse>, response: Response<MeasurementResponse>) {
                 }
@@ -153,6 +154,7 @@ class MainActivity : AppCompatActivity() {
             updateUI(measurement)
             sendMeasurementToServer(measurement)
         } else {
+
             tvOperator.text = "--"
             tvNetwork.text = "--"
             tvSignal.text = "--"
