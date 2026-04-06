@@ -1,5 +1,4 @@
 package com.example.networkcellanalyzer.telephony
-
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
@@ -7,6 +6,7 @@ import android.telephony.TelephonyManager
 import android.telephony.CellInfoGsm
 import android.telephony.CellInfoWcdma
 import android.telephony.CellInfoLte
+import android.telephony.CellInfo
 import com.example.networkcellanalyzer.model.MeasurementRequest
 import java.time.Instant
 
@@ -28,7 +28,7 @@ fun readMeasurementFromPhone(context: Context, deviceId: String): MeasurementReq
     val cellList = tm.allCellInfo
     if (cellList == null || cellList.isEmpty()) return null
 
-    val cell = cellList[0]
+    val cell =  cellList.firstOrNull { it.isRegistered } ?: cellList.first()
 
     // 4G
     if (cell is CellInfoLte) {
@@ -53,13 +53,17 @@ fun readMeasurementFromPhone(context: Context, deviceId: String): MeasurementReq
     // 3G
     else if (cell is CellInfoWcdma) {
         val signal = cell.cellSignalStrength
+
         return MeasurementRequest(
             device_id = deviceId,
             operator = operator,
             signal_power = signal.dbm,
             SNR = null,
             network_type = "3G",
-            frequency_band = null,
+            frequency_band = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                val uarfcn = cell.cellIdentity.uarfcn
+                if (uarfcn != CellInfo.UNAVAILABLE) uarfcn else null
+            } else null,
             cell_id = cell.cellIdentity.cid.toString(),
             time_stamp = getCurrentTimestamp()
         )
@@ -73,7 +77,10 @@ fun readMeasurementFromPhone(context: Context, deviceId: String): MeasurementReq
             signal_power = signal.dbm,
             SNR = null,
             network_type = "2G",
-            frequency_band = null,
+            frequency_band = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                val arfcn = cell.cellIdentity.arfcn
+                if (arfcn != CellInfo.UNAVAILABLE) arfcn else null
+            } else null,
             cell_id = cell.cellIdentity.cid.toString(),
             time_stamp = getCurrentTimestamp()
         )
