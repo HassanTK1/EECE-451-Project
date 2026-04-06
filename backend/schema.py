@@ -22,11 +22,12 @@ class Identification_response(BaseModel):
 
 
 class Measurements_request(BaseModel):
+    device_id: str
     operator: str
-    signal_power: int # in decibels
-    SNR : Optional[float] = None
-    network_type: Literal["2G","3G","4G"]   ### FOCUS - type might be better categorized
-    frequency_band: Optional[int] = None # review data format
+    signal_power: Optional[float] # in decibels
+    SNR : Optional[float]= None
+    network_type: Literal["2G","3G","4G","5G"]   ### FOCUS - type might be better categorized
+    frequency_band: float # review data format
     cell_id: str # maybe str 
     time_stamp: datetime    
 
@@ -41,13 +42,11 @@ class Measurements_response(BaseModel):
 class Stats_response(BaseModel):
     from_date: datetime
     to_date: datetime
-    avg_connectivity_operator: List
-    avg_connectivity_network: List
-    avg_signal_power_networkType: List
-    avg_signal_power_device: List
-    avg_SNR_SNIR: List
-    
-
+    avg_connectivity_operator: List[float]
+    avg_connectivity_network: List[float]
+    avg_signal_power_networkType: List[Optional[float]]
+    avg_signal_power_device: float
+    avg_SNR_SNIR: List[Optional[float]]
 
 
 
