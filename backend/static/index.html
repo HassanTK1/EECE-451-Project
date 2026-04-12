@@ -27,6 +27,18 @@
     </head>
     <body>
         <h1>Server Dashboard</h1>
+        <div id="serverStatus" style="
+            margin: 10px auto 20px auto;
+            padding: 10px 20px;
+            border-radius: 8px;
+            width: fit-content;
+            background-color: #333;
+            color: white;
+            font-weight: bold;
+        ">
+            Server: <span id="statusText">Checking...</span>
+            
+        </div>
 
         <div style="
             display: inline-block;
@@ -49,6 +61,31 @@
         </table>
 
         <script>
+            function checkServerHealth() {
+                fetch('/health')
+                .then(response => {
+                    if (!response.ok) throw new Error("Bad response")
+                    return response.json()
+                })
+                .then(data => {
+                    var statusDiv = document.getElementById("serverStatus")
+
+                    if (data.status === "ok") {
+                        statusDiv.textContent = "Server is ONLINE"
+                        statusDiv.style.color = "#4CAF50" // green
+                    
+                    }
+                })
+                .catch(() => {
+                    var statusDiv = document.getElementById("serverStatus")
+                    statusDiv.textContent = "Server is OFFLINE"
+                    statusDiv.style.color = "#FF3B3B" // red
+                })
+            }
+            
+
+
+
             function loadDevices() {
                 fetch('/devices')
                 .then(r => r.json())
@@ -72,7 +109,9 @@
                 })
             }
             loadDevices()
+            checkServerHealth()
             setInterval(loadDevices, 5000)
+            setInterval(loadDevices, 2000)
         </script>
     </body>
 </html>
