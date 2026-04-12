@@ -4,6 +4,7 @@ import com.example.a451_app.model.IdentificationRequest
 import com.example.a451_app.model.IdentificationResponse
 import com.example.a451_app.model.MeasurementRequest
 import com.example.a451_app.model.MeasurementResponse
+import com.example.a451_app.model.StatsResponse
 
 import retrofit2.Call
 import retrofit2.http.Body
@@ -22,11 +23,17 @@ interface APIservice{
         @Body body : IdentificationRequest
     ) : Call<IdentificationResponse>
 
-    @POST("/measurements")
+    @POST("/measurement")
     fun sendMetrics(
         @Query("device_id") deviceId: String,
         @Body body: MeasurementRequest
     ): Call<MeasurementResponse>
 
+    @GET("/stats")
+    fun getStats(
+        @Query("device_id") deviceId: String,
+        @Query("from_date") fromDate: String,
+        @Query("to_date") toDate: String
+    ): Call<StatsResponse>
 
 }
