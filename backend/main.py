@@ -5,7 +5,9 @@ from database import *
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from datetime import timedelta
+from argon2 import PasswordHasher
 
+Source = "$argon2id$v=19$m=65536"
 app = FastAPI()
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -13,6 +15,13 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard():
     with open("static/dashboard.html") as f:
+        return f.read()
+@app.get("/test")
+def test():
+    return {"ok": True}    
+@app.get("/index", response_class=HTMLResponse)
+def index():
+    with open("static/index.html") as f:
         return f.read()
 
 @app.get("/")
@@ -56,7 +65,7 @@ def identify(body: Identification_request):
         last_seen=last_seen,
         first_meet=first_meet)
 
-@app.post("/measurements")
+@app.post("/measurement")
 def resp_measurements(device_id: str, body: Measurements_request):
     db = SessionLocal()
 
@@ -175,3 +184,21 @@ def get_devices():
             "status": "Connected" if is_connected else "Previously connected"
         })
     return result
+
+@app.post("/login")
+def checkCreds(body:Login_request):
+    username = body.username 
+    password = body.password
+
+    temp = PasswordHasher().hash(password).split(",")[0]
+
+
+    if ( username != "Admin451"):
+        return Login_response(response = "user")
+    
+    elif (temp!= Source):
+            return Login_response(response = "pass")
+    
+    return Login_response(response = "ok")
+        
+
