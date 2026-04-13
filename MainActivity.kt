@@ -39,7 +39,7 @@ class MainActivity : AppCompatActivity() {
     private val interval = 3000L
 
     private val measurementHandler = Handler(Looper.getMainLooper())
-    private val measurementInterval = 10000L
+    private val measurementInterval = 7000L
 
     private val healthRunnable = object : Runnable {
         override fun run() {
