@@ -14,3 +14,6 @@ uv add fastapi "uvicorn[standard]"
 ## here go and copy the main from this repo ( the file will change later bas this works for now )
 
 uv run uvicorn main:app --reload
+
+
+PASSWORD FOR LOGIN IS :   XzEp[90==_2!_-@E5h-]
