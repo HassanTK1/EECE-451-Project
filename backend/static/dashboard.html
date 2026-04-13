@@ -1,4 +1,11 @@
 <!DOCTYPE html>
+
+<script>
+    if (localStorage.getItem("logged_in") !== "true") {
+        window.location.href = "/index";
+    }
+</script>
+
 <html>
     <head>
         <title>Network Cell Analyzer</title>
@@ -111,7 +118,7 @@
             loadDevices()
             checkServerHealth()
             setInterval(loadDevices, 5000)
-            setInterval(loadDevices, 2000)
+            setInterval(checkServerHealth, 2000)
         </script>
     </body>
 </html>
