@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+    <style>
+        body {
+            background-color: #1A1A1A;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .login-box {
+            background-color: #2A2A2A;
+            padding: 30px;
+            border-radius: 10px;
+            width: 320px;
+            text-align: center;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            margin-bottom: 15px;
+            border: none;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #errorText {
+            color: #FF3B3B;
+            margin-top: 12px;
+            min-height: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <h2>Server Login</h2>
+
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
+
+        <button onclick="login()">Login</button>
+
+        <div id="errorText"></div>
+    </div>
+
+    <script>
+    const SERVER_BASE_URL = "";
+
+    async function login() {
+        const username = document.getElementById("username").value.trim();
+        const password = document.getElementById("password").value;
+        const errorText = document.getElementById("errorText");
+
+        errorText.textContent = "";
+
+        try {
+            const response = await fetch(`${SERVER_BASE_URL}/login`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password
+                })
+            });
+
+            const text = await response.text();
+            console.log("status:", response.status);
+            console.log("raw response:", text);
+
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch {
+                errorText.textContent = "Server did not return JSON";
+                return;
+            }
+
+            if (data.response === "ok") {
+                localStorage.setItem("logged_in","true");
+                window.location.href = "/dashboard";
+            } else if (data.response === "user") {
+                errorText.textContent = "Wrong username";
+            } else if (data.response === "pass") {
+                errorText.textContent = "Wrong password";
+            } else {
+                errorText.textContent = "Unexpected server response";
+            }
+
+        } catch (error) {
+            console.error(error);
+            errorText.textContent = "Cannot connect to server";
+        }
+    }
+</script>
+</body>
+</html>
