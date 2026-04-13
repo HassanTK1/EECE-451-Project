@@ -28,12 +28,14 @@
             android:layout_marginBottom="12dp">
 
             <LinearLayout
+                android:id="@+id/cardFromTo"
                 android:layout_width="57dp"
                 android:layout_height="130dp"
                 android:layout_marginEnd="6dp"
                 android:layout_weight="1"
                 android:background="#2A2A2A"
                 android:orientation="vertical"
+                android:clickable="true"
                 android:padding="10dp">
 
                 <LinearLayout
@@ -143,7 +145,7 @@
                 style="?android:attr/progressBarStyleHorizontal"
                 android:layout_width="match_parent"
                 android:layout_height="8dp"
-                android:progress="70"
+                android:progress="0"
                 android:progressTint="#4A90D9"
                 android:layout_marginBottom="8dp"/>
 
@@ -159,7 +161,7 @@
                 style="?android:attr/progressBarStyleHorizontal"
                 android:layout_width="match_parent"
                 android:layout_height="8dp"
-                android:progress="30"
+                android:progress="0"
                 android:progressTint="#4CAF50"
                 android:layout_marginBottom="8dp"/>
 
@@ -181,6 +183,7 @@
                 android:textColor="#888888"
                 android:textSize="14sp"
                 android:layout_marginBottom="12dp"/>
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -193,7 +196,7 @@
                 style="?android:attr/progressBarStyleHorizontal"
                 android:layout_width="match_parent"
                 android:layout_height="8dp"
-                android:progress="70"
+                android:progress="0"
                 android:progressTint="#4A90D9"
                 android:layout_marginBottom="8dp"/>
 
@@ -209,7 +212,7 @@
                 style="?android:attr/progressBarStyleHorizontal"
                 android:layout_width="match_parent"
                 android:layout_height="8dp"
-                android:progress="70"
+                android:progress="0"
                 android:progressTint="#4A90D9"
                 android:layout_marginBottom="8dp"/>
 
@@ -225,7 +228,7 @@
                 style="?android:attr/progressBarStyleHorizontal"
                 android:layout_width="match_parent"
                 android:layout_height="8dp"
-                android:progress="30"
+                android:progress="0"
                 android:progressTint="#4CAF50"
                 android:layout_marginBottom="8dp"/>
 
@@ -306,6 +309,7 @@
                 android:textColor="#FFFFFF"
                 android:textStyle="bold"/>
         </LinearLayout>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -368,14 +372,7 @@
 
             </LinearLayout>
 
-
-
-
         </LinearLayout>
-
-
-
-
 
         <!-- Back button -->
         <Button
