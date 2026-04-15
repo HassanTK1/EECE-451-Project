@@ -7,6 +7,12 @@ class Health_response(BaseModel):
     status: Literal["ok"] = "ok"
     time : datetime
 
+class Login_request(BaseModel):
+    username: str
+    password: str
+
+class Login_response(BaseModel):
+    response: str
 
 class Identification_request(BaseModel):
 
