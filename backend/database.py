@@ -2,7 +2,7 @@ from sqlalchemy import create_engine,Column,String,DateTime,Boolean,Integer,Floa
 from sqlalchemy.orm import sessionmaker,declarative_base
 import os
 
-DATABASE_URL = ("postgresql://root:KBNuZJLiMbf9foYDwXQ8fiDxwAkP3LlK@dpg-d7g1221o3t8c73c099u0-a/my_eece_database_on_render")
+DATABASE_URL = os.getenv("postgresql://root:KBNuZJLiMbf9foYDwXQ8fiDxwAkP3LlK@dpg-d7g1221o3t8c73c099u0-a/my_eece_database_on_render")
 engine = create_engine( DATABASE_URL, pool_pre_ping=True)
 
 SessionLocal = sessionmaker(bind=engine)
