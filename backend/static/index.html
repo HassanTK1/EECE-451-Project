@@ -103,13 +103,17 @@
             errorText.textContent = JSON.stringify(data);
 
             if (data.response === "ok") {
+                localStorage.setItem("logged_in", "true");
                 window.location.href = "/dashboard";
-            } else if (data.response === "user") {
+            } 
+            else if (data.response === "user") {
                 errorText.textContent = "Wrong username";
-            } else if (data.response === "pass") {
+            } 
+            else if (data.response === "pass") {
                 errorText.textContent = "Wrong password";
-            } else {
-                errorText.textContent = "Unexpected: " + JSON.stringify(data);
+            } 
+            else {
+                errorText.textContent = "Unexpected server response";
             }
 
         } catch (error) {
