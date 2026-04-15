@@ -6,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from datetime import timedelta
 from argon2 import PasswordHasher
+from fastapi import Body
 
 Source = "$argon2id$v=19$m=65536"
 app = FastAPI()
@@ -187,7 +188,7 @@ def get_devices():
     return result
 
 @app.post("/login")
-def checkCreds(body: Login_request):
+def checkCreds(body: Login_request = Body(...):
     username = body.username
     password = body.password
 
