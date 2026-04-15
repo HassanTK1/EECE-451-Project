@@ -24,9 +24,10 @@ def index():
     with open("static/index.html") as f:
         return f.read()
 
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 def root():
-    return {"message": "server is running"}
+    with open("static/index.html") as f:
+        return f.read()
 
 @app.get("/health")
 def health():
