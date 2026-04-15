@@ -188,7 +188,7 @@ def get_devices():
     return result
 
 @app.post("/login")
-def checkCreds(body: Login_request = Body(...):
+def checkCreds(body: Login_request = Body(...)):
     username = body.username
     password = body.password
 
