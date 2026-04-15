@@ -187,19 +187,14 @@ def get_devices():
     return result
 
 @app.post("/login")
-def checkCreds(body:Login_request):
-    username = body.username 
+def checkCreds(body: Login_request):
+    username = body.username
     password = body.password
 
-    temp = PasswordHasher().hash(password).split(",")[0]
+    if username != "Admin451":
+        return {"response": "user"}
 
+    if password != "1234":
+        return {"response": "pass"}
 
-    if ( username != "Admin451"):
-        return Login_response(response = "user")
-    
-    elif (temp!= Source):
-            return Login_response(response = "pass")
-    
-    return Login_response(response = "ok")
-        
-
+    return {"response": "ok"}
