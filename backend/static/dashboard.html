@@ -7,118 +7,530 @@
 </script>
 
 <html>
-    <head>
-        <title>Network Cell Analyzer</title>
-        <style>
-            body {
-                background-color: #1A1A1A;
-                color: white;
-                font-family: Arial;
-                text-align: center;
-                padding: 20px;
-            }
-            table {
-                margin: auto;
-                border-collapse: collapse;
-                width: 60%;
-            }
-            th, td {
-                border: 1px solid white;
-                padding: 10px;
-                text-align: center;
-            }
-            th {
-                background-color: #333;
-            }
-        </style>
-    </head>
-    <body>
-        <h1>Server Dashboard</h1>
-        <div id="serverStatus" style="
-            margin: 10px auto 20px auto;
+<head>
+    <title>Network Cell Analyzer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep:    #080a09;
+            --bg-panel:   #0e1210;
+            --bg-row:     #111613;
+            --bg-hover:   #172019;
+            --border:     #1e2a22;
+            --border-hi:  #2e4535;
+            --green:      #00e676;
+            --green-dim:  #00914a;
+            --green-glow: rgba(0,230,118,0.18);
+            --amber:      #ffb300;
+            --red:        #ff3d3d;
+            --text:       #c8d8cc;
+            --text-dim:   #4a5e50;
+            --mono:       'Share Tech Mono', monospace;
+            --head:       'Rajdhani', sans-serif;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text);
+            font-family: var(--mono);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Subtle grid background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0,230,118,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,230,118,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Scanline overlay */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0,0,0,0.08) 2px,
+                rgba(0,0,0,0.08) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .wrapper {
+            position: relative;
+            z-index: 1;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 24px 60px;
+            animation: fadeUp 0.6s ease both;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── Header ── */
+        .header {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-hi);
+            padding-bottom: 20px;
+            margin-bottom: 32px;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .header-left {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .header-eyebrow {
+            font-family: var(--mono);
+            font-size: 10px;
+            letter-spacing: 0.25em;
+            color: var(--green-dim);
+            text-transform: uppercase;
+        }
+
+        .header-title {
+            font-family: var(--head);
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            color: #fff;
+            line-height: 1;
+        }
+
+        .header-title span {
+            color: var(--green);
+        }
+
+        /* ── Status pill ── */
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-hi);
+            border-radius: 4px;
             padding: 10px 20px;
-            border-radius: 8px;
-            width: fit-content;
-            background-color: #333;
-            color: white;
-            font-weight: bold;
-        ">
-            Server: <span id="statusText">Checking...</span>
-            
-        </div>
+            font-family: var(--head);
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            transition: border-color 0.4s, box-shadow 0.4s;
+        }
 
-        <div style="
-            display: inline-block;
-            background-color: #2A2A2A;
-            padding: 20px 40px;
-            margin-bottom: 20px;
-            border-radius: 8px;">
-            <p style="color: #888888; margin: 0;">Connected Devices</p>
-            <h2 id="connectedCount" style="margin: 5px 0 0 0; color: #4CAF50;">0</h2>
-        </div>
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-dim);
+            transition: background 0.4s, box-shadow 0.4s;
+            flex-shrink: 0;
+        }
 
+        .status-pill.online {
+            border-color: var(--green-dim);
+            box-shadow: 0 0 18px var(--green-glow);
+        }
+        .status-pill.online .status-dot {
+            background: var(--green);
+            box-shadow: 0 0 8px var(--green), 0 0 20px var(--green);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        .status-pill.online #statusText { color: var(--green); }
+
+        .status-pill.offline { border-color: rgba(255,61,61,0.4); }
+        .status-pill.offline .status-dot {
+            background: var(--red);
+            box-shadow: 0 0 8px var(--red);
+        }
+        .status-pill.offline #statusText { color: var(--red); }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 6px var(--green), 0 0 14px var(--green); }
+            50%       { box-shadow: 0 0 12px var(--green), 0 0 28px var(--green); }
+        }
+
+        /* ── Metrics bar ── */
+        .metrics {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+        }
+
+        .metric-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 18px 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 140px;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.3s;
+            animation: fadeUp 0.6s ease both;
+        }
+
+        .metric-card:nth-child(1) { animation-delay: 0.05s; }
+        .metric-card:nth-child(2) { animation-delay: 0.10s; }
+        .metric-card:nth-child(3) { animation-delay: 0.15s; }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 2px;
+            background: var(--green-dim);
+        }
+
+        .metric-label {
+            font-family: var(--mono);
+            font-size: 10px;
+            letter-spacing: 0.2em;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+
+        .metric-value {
+            font-family: var(--head);
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--green);
+            line-height: 1;
+            transition: all 0.4s;
+        }
+
+        /* ── Table ── */
+        .table-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .table-title {
+            font-family: var(--head);
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+        }
+
+        .refresh-badge {
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            color: var(--text-dim);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            padding: 3px 8px;
+        }
+
+        .table-wrap {
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            animation: fadeUp 0.6s 0.2s ease both;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead tr {
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border-hi);
+        }
+
+        th {
+            font-family: var(--mono);
+            font-size: 10px;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            padding: 14px 18px;
+            text-align: left;
+            font-weight: 400;
+            white-space: nowrap;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background 0.18s;
+        }
+
+        tbody tr:last-child { border-bottom: none; }
+
+        tbody tr:hover {
+            background: var(--bg-hover);
+            cursor: default;
+        }
+
+        td {
+            padding: 14px 18px;
+            font-size: 13px;
+            color: var(--text);
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        td:first-child {
+            font-family: var(--head);
+            font-size: 15px;
+            font-weight: 600;
+            color: #fff;
+            letter-spacing: 0.04em;
+        }
+
+        td.mac {
+            color: var(--text-dim);
+            letter-spacing: 0.05em;
+        }
+
+        td.ts { color: var(--text-dim); font-size: 12px; }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--head);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 2px;
+        }
+
+        .status-badge.connected {
+            background: rgba(0,230,118,0.08);
+            color: var(--green);
+            border: 1px solid rgba(0,230,118,0.25);
+        }
+
+        .status-badge.disconnected {
+            background: rgba(74,94,80,0.15);
+            color: var(--text-dim);
+            border: 1px solid var(--border);
+        }
+
+        .status-badge .dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .status-badge.connected .dot {
+            animation: pulse 2s ease-in-out infinite;
+            box-shadow: 0 0 6px var(--green);
+        }
+
+        .empty-row td {
+            text-align: center;
+            color: var(--text-dim);
+            padding: 40px;
+            font-size: 12px;
+            letter-spacing: 0.1em;
+        }
+
+        /* ── Footer ── */
+        .footer {
+            margin-top: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .footer-text {
+            font-size: 10px;
+            letter-spacing: 0.15em;
+            color: var(--text-dim);
+        }
+
+        #clockDisplay {
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+        }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+
+    <!-- Header -->
+    <div class="header">
+        <div class="header-left">
+            <div class="header-eyebrow">// Network Cell Analyzer</div>
+            <div class="header-title">SERVER <span>DASHBOARD</span></div>
+        </div>
+        <div class="status-pill" id="statusPill">
+            <div class="status-dot" id="statusDot"></div>
+            <span id="statusText">CHECKING…</span>
+        </div>
+    </div>
+
+    <!-- Metrics -->
+    <div class="metrics">
+        <div class="metric-card">
+            <div class="metric-label">Connected</div>
+            <div class="metric-value" id="connectedCount">—</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Total Devices</div>
+            <div class="metric-value" id="totalCount">—</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Last Refresh</div>
+            <div class="metric-value" id="refreshTime" style="font-size:20px; padding-top:8px;">—</div>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-header">
+        <div class="table-title">Device Registry</div>
+        <div class="refresh-badge" id="refreshBadge">AUTO · 5s</div>
+    </div>
+    <div class="table-wrap">
         <table id="devicesTable">
-            <tr>
-                <th>Device ID</th>
-                <th>MAC Address</th>
-                <th>First Seen</th>
-                <th>Last Seen</th>
-                <th>Status</th>
-            </tr>
+            <thead>
+                <tr>
+                    <th>Device ID</th>
+                    <th>MAC Address</th>
+                    <th>First Seen</th>
+                    <th>Last Seen</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="devicesBody">
+                <tr class="empty-row">
+                    <td colspan="5">LOADING DEVICES…</td>
+                </tr>
+            </tbody>
         </table>
+    </div>
 
-        <script>
-            function checkServerHealth() {
-                fetch('/health')
-                .then(response => {
-                    if (!response.ok) throw new Error("Bad response")
-                    return response.json()
-                })
-                .then(data => {
-                    var statusDiv = document.getElementById("serverStatus")
+    <!-- Footer -->
+    <div class="footer">
+        <div class="footer-text">NETWORK CELL ANALYZER · v2.0</div>
+        <div id="clockDisplay">—</div>
+    </div>
 
-                    if (data.status === "ok") {
-                        statusDiv.textContent = "Server is ONLINE"
-                        statusDiv.style.color = "#4CAF50" // green
-                    
-                    }
-                })
-                .catch(() => {
-                    var statusDiv = document.getElementById("serverStatus")
-                    statusDiv.textContent = "Server is OFFLINE"
-                    statusDiv.style.color = "#FF3B3B" // red
-                })
+</div>
+
+<script>
+    /* ── Clock ── */
+    function updateClock() {
+        var now = new Date();
+        var h = String(now.getHours()).padStart(2,'0');
+        var m = String(now.getMinutes()).padStart(2,'0');
+        var s = String(now.getSeconds()).padStart(2,'0');
+        document.getElementById('clockDisplay').textContent =
+            now.toDateString().toUpperCase() + ' · ' + h + ':' + m + ':' + s;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    /* ── Health check ── */
+    function checkServerHealth() {
+        fetch('/health')
+        .then(function(response) {
+            if (!response.ok) throw new Error('Bad response');
+            return response.json();
+        })
+        .then(function(data) {
+            var pill = document.getElementById('statusPill');
+            var text = document.getElementById('statusText');
+            if (data.status === 'ok') {
+                pill.className = 'status-pill online';
+                text.textContent = 'ONLINE';
             }
-            
+        })
+        .catch(function() {
+            var pill = document.getElementById('statusPill');
+            var text = document.getElementById('statusText');
+            pill.className = 'status-pill offline';
+            text.textContent = 'OFFLINE';
+        });
+    }
 
+    /* ── Load devices ── */
+    function loadDevices() {
+        fetch('/devices')
+        .then(function(r) { return r.json(); })
+        .then(function(devices) {
+            var body = document.getElementById('devicesBody');
+            var connected = devices.filter(function(d) { return d.status === 'Connected'; }).length;
 
+            document.getElementById('connectedCount').textContent = connected;
+            document.getElementById('totalCount').textContent = devices.length;
 
-            function loadDevices() {
-                fetch('/devices')
-                .then(r => r.json())
-                .then(devices => {
-                    var table = document.getElementById('devicesTable')
-                    table.innerHTML = '<tr><th>Device ID</th><th>MAC Address</th><th>First Seen</th><th>Last Seen</th><th>Status</th></tr>'
-                    
-                    var connected = devices.filter(d => d.status === "Connected").length
-                    document.getElementById('connectedCount').textContent = connected
+            var now = new Date();
+            document.getElementById('refreshTime').textContent =
+                String(now.getHours()).padStart(2,'0') + ':' +
+                String(now.getMinutes()).padStart(2,'0') + ':' +
+                String(now.getSeconds()).padStart(2,'0');
 
-                    devices.forEach(function(device) {
-                        var statusColor = device.status === "Connected" ? "#4CAF50" : "#888888"
-                        table.innerHTML += '<tr>' +
-                            '<td>' + device.device_id + '</td>' +
-                            '<td>' + device.mac_address + '</td>' +
-                            '<td>' + device.first_seen + '</td>' +
-                            '<td>' + device.last_seen + '</td>' +
-                            '<td style="color:' + statusColor + '">' + device.status + '</td>' +
-                            '</tr>'
-                    })
-                })
+            if (devices.length === 0) {
+                body.innerHTML = '<tr class="empty-row"><td colspan="5">NO DEVICES FOUND</td></tr>';
+                return;
             }
-            loadDevices()
-            checkServerHealth()
-            setInterval(loadDevices, 5000)
-            setInterval(checkServerHealth, 2000)
-        </script>
-    </body>
+
+            var html = '';
+            devices.forEach(function(device) {
+                var isConn = device.status === 'Connected';
+                var badgeClass = isConn ? 'connected' : 'disconnected';
+                var label = isConn ? 'Connected' : 'Disconnected';
+                html += '<tr>' +
+                    '<td>' + device.device_id + '</td>' +
+                    '<td class="mac">' + device.mac_address + '</td>' +
+                    '<td class="ts">' + device.first_seen + '</td>' +
+                    '<td class="ts">' + device.last_seen + '</td>' +
+                    '<td><span class="status-badge ' + badgeClass + '">' +
+                        '<span class="dot"></span>' + label +
+                    '</span></td>' +
+                    '</tr>';
+            });
+            body.innerHTML = html;
+        })
+        .catch(function() {
+            document.getElementById('devicesBody').innerHTML =
+                '<tr class="empty-row"><td colspan="5">FAILED TO LOAD DEVICES</td></tr>';
+        });
+    }
+
+    loadDevices();
+    checkServerHealth();
+    setInterval(loadDevices, 5000);
+    setInterval(checkServerHealth, 2000);
+</script>
+</body>
 </html>
