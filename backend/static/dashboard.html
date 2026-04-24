@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <script>
     if (localStorage.getItem("logged_in") !== "true") {
         window.location.href = "/index";
@@ -8,529 +7,413 @@
 
 <html>
 <head>
-    <title>Network Cell Analyzer</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-deep:    #080a09;
-            --bg-panel:   #0e1210;
-            --bg-row:     #111613;
-            --bg-hover:   #172019;
-            --border:     #1e2a22;
-            --border-hi:  #2e4535;
-            --green:      #00e676;
-            --green-dim:  #00914a;
-            --green-glow: rgba(0,230,118,0.18);
-            --amber:      #ffb300;
-            --red:        #ff3d3d;
-            --text:       #c8d8cc;
-            --text-dim:   #4a5e50;
-            --mono:       'Share Tech Mono', monospace;
-            --head:       'Rajdhani', sans-serif;
-        }
+<title>Network Cell Analyzer</title>
+<style>
+:root {
+    --bg:      #e2e2e2;
+    --s1:      #c6c6c9;
+    --s2:      #c6c6c9;
+    --s3:      #c6c6c9;
+    --border:  #31353e;
+    --border2: #31353e;
+    --green:   #4ade80;
+    --green-d: #22c55e;
+    --amber:   #fbbf24;
+    --red:     #f87171;
+    --text:    #080909;
+    --sub:     #0d0e10;
+    --dim:     #4e5c72;
+    --sans:    -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --mono:    'SF Mono','Fira Code','Courier New', monospace;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    font-size: 14px;
+}
 
-        body {
-            background-color: var(--bg-deep);
-            color: var(--text);
-            font-family: var(--mono);
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
+.shell {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 36px 32px 80px;
+    animation: up 0.4s ease both;
+}
+@keyframes up {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
 
-        /* Subtle grid background */
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background-image:
-                linear-gradient(rgba(0,230,118,0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0,230,118,0.03) 1px, transparent 1px);
-            background-size: 40px 40px;
-            pointer-events: none;
-            z-index: 0;
-        }
+/* ── Nav ── */
+.nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 22px;
+    margin-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: 14px;
+}
+.nav-brand { display: flex; align-items: center; gap: 13px; }
+.nav-logo {
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    border: 1px solid var(--border2);
+    background: var(--s2);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.nav-logo svg { width: 17px; height: 17px; }
+.nav-title { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; color: var(--text); }
+.nav-label { font-size: 11px; color: var(--dim); margin-top: 2px; }
 
-        /* Scanline overlay */
-        body::after {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background: repeating-linear-gradient(
-                0deg,
-                transparent,
-                transparent 2px,
-                rgba(0,0,0,0.08) 2px,
-                rgba(0,0,0,0.08) 4px
-            );
-            pointer-events: none;
-            z-index: 9999;
-        }
+.status-pill {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 13px;
+    border-radius: 6px;
+    border: 1px solid var(--border2);
+    background: var(--s2);
+    font-size: 11px; font-weight: 600;
+    color: var(--sub);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    transition: color 0.3s, border-color 0.3s;
+}
+.status-pill.online  { color: var(--green); border-color: var(--border2); }
+.status-pill.offline { color: var(--red);   border-color: var(--border2); }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.status-pill.online .status-dot { animation: blink 2s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
 
-        .wrapper {
-            position: relative;
-            z-index: 1;
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 40px 24px 60px;
-            animation: fadeUp 0.6s ease both;
-        }
+/* ── Stats ── */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 28px;
+}
+.stat {
+    padding: 20px 24px;
+    background: var(--s1);
+    border-right: 1px solid var(--border);
+}
+.stat:last-child { border-right: none; }
+.stat-lbl {
+    font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--dim); margin-bottom: 10px;
+}
+.stat-num {
+    font-size: 36px; font-weight: 700;
+    letter-spacing: -0.04em; line-height: 1;
+    color: var(--text);
+}
+.stat-num.hi { color: var(--green); }
+.stat-num.sm { font-size: 17px; font-weight: 500; letter-spacing: -0.01em; color: var(--sub); padding-top: 8px; }
 
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(16px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
+/* ── Section ── */
+.section { margin-bottom: 28px; }
 
-        /* ── Header ── */
-        .header {
-            display: flex;
-            align-items: flex-end;
-            justify-content: space-between;
-            border-bottom: 1px solid var(--border-hi);
-            padding-bottom: 20px;
-            margin-bottom: 32px;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
+.section-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--s2);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 10px 10px 0 0;
+}
+.section-title {
+    display: flex; align-items: center; gap: 9px;
+    font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.09em;
+    color: var(--sub);
+}
+.s-count {
+    font-size: 10px; font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 4px;
+    border: 1px solid var(--border2);
+    background: var(--s3);
+    color: var(--dim);
+}
+.s-count.live { color: var(--green); }
+.section-meta { font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.07em; }
 
-        .header-left {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
+/* ── Table ── */
+.t-wrap {
+    border: 1px solid var(--border);
+    border-radius: 0 0 10px 10px;
+    overflow: hidden;
+}
+table { width: 100%; border-collapse: collapse; }
 
-        .header-eyebrow {
-            font-family: var(--mono);
-            font-size: 10px;
-            letter-spacing: 0.25em;
-            color: var(--green-dim);
-            text-transform: uppercase;
-        }
+thead tr {
+    background: var(--s1);
+    border-bottom: 1px solid var(--border);
+}
+th {
+    padding: 10px 16px;
+    text-align: left;
+    font-size: 10px; font-weight: 600;
+    color: var(--dim);
+    text-transform: uppercase; letter-spacing: 0.09em;
+    white-space: nowrap;
+}
+th + th { border-left: 1px solid var(--border); }
 
-        .header-title {
-            font-family: var(--head);
-            font-size: 32px;
-            font-weight: 700;
-            letter-spacing: 0.06em;
-            color: #fff;
-            line-height: 1;
-        }
+tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: rgba(255,255,255,0.025); }
 
-        .header-title span {
-            color: var(--green);
-        }
+td {
+    padding: 12px 16px;
+    font-size: 13px; color: var(--sub);
+    vertical-align: middle; white-space: nowrap;
+    background: var(--s1);
+}
+td + td { border-left: 1px solid var(--border); }
+td:first-child { color: var(--text); font-weight: 600; letter-spacing: -0.01em; }
+td.mac { font-family: var(--mono); font-size: 12px; color: var(--dim); letter-spacing: 0.04em; }
+td.ts  { font-size: 12px; color: var(--dim); }
 
-        /* ── Status pill ── */
-        .status-pill {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: var(--bg-panel);
-            border: 1px solid var(--border-hi);
-            border-radius: 4px;
-            padding: 10px 20px;
-            font-family: var(--head);
-            font-size: 13px;
-            font-weight: 600;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            transition: border-color 0.4s, box-shadow 0.4s;
-        }
+tbody tr:hover td { background: var(--s2); }
 
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--text-dim);
-            transition: background 0.4s, box-shadow 0.4s;
-            flex-shrink: 0;
-        }
+/* ── Signal ── */
+.signal {
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 3px; height: 14px;
+}
+.signal span { display: block; width: 4px; background: var(--border2); border-radius: 1px; }
+.signal span:nth-child(1) { height: 5px; }
+.signal span:nth-child(2) { height: 8px; }
+.signal span:nth-child(3) { height: 11px; }
+.signal span:nth-child(4) { height: 14px; }
 
-        .status-pill.online {
-            border-color: var(--green-dim);
-            box-shadow: 0 0 18px var(--green-glow);
-        }
-        .status-pill.online .status-dot {
-            background: var(--green);
-            box-shadow: 0 0 8px var(--green), 0 0 20px var(--green);
-            animation: pulse 2s ease-in-out infinite;
-        }
-        .status-pill.online #statusText { color: var(--green); }
+.signal.s1 span:nth-child(1) { background: var(--red); }
+.signal.s2 span:nth-child(1),
+.signal.s2 span:nth-child(2) { background: var(--amber); }
+.signal.s3 span:nth-child(1),
+.signal.s3 span:nth-child(2),
+.signal.s3 span:nth-child(3) { background: var(--green); }
+.signal.s4 span               { background: var(--green); }
 
-        .status-pill.offline { border-color: rgba(255,61,61,0.4); }
-        .status-pill.offline .status-dot {
-            background: var(--red);
-            box-shadow: 0 0 8px var(--red);
-        }
-        .status-pill.offline #statusText { color: var(--red); }
+.sig-cell { display: flex; align-items: center; gap: 10px; }
+.sig-lbl  { font-size: 12px; font-weight: 500; color: var(--sub); }
+.signal.s1 + .sig-lbl { color: var(--red);   }
+.signal.s2 + .sig-lbl { color: var(--amber); }
+.signal.s3 + .sig-lbl { color: var(--green); }
+.signal.s4 + .sig-lbl { color: var(--green); }
 
-        @keyframes pulse {
-            0%, 100% { box-shadow: 0 0 6px var(--green), 0 0 14px var(--green); }
-            50%       { box-shadow: 0 0 12px var(--green), 0 0 28px var(--green); }
-        }
+/* ── Status tag ── */
+.tag {
+    display: inline-block;
+    font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.07em;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: var(--s3);
+    border: 1px solid var(--border2);
+    color: var(--dim);
+}
 
-        /* ── Metrics bar ── */
-        .metrics {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 28px;
-            flex-wrap: wrap;
-        }
+.empty td {
+    text-align: center; padding: 38px;
+    color: var(--dim); font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    border-left: none !important;
+    background: var(--s1) !important;
+}
 
-        .metric-card {
-            background: var(--bg-panel);
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            padding: 18px 28px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            min-width: 140px;
-            position: relative;
-            overflow: hidden;
-            transition: border-color 0.3s;
-            animation: fadeUp 0.6s ease both;
-        }
-
-        .metric-card:nth-child(1) { animation-delay: 0.05s; }
-        .metric-card:nth-child(2) { animation-delay: 0.10s; }
-        .metric-card:nth-child(3) { animation-delay: 0.15s; }
-
-        .metric-card::before {
-            content: '';
-            position: absolute;
-            left: 0; top: 0; bottom: 0;
-            width: 2px;
-            background: var(--green-dim);
-        }
-
-        .metric-label {
-            font-family: var(--mono);
-            font-size: 10px;
-            letter-spacing: 0.2em;
-            color: var(--text-dim);
-            text-transform: uppercase;
-        }
-
-        .metric-value {
-            font-family: var(--head);
-            font-size: 36px;
-            font-weight: 700;
-            color: var(--green);
-            line-height: 1;
-            transition: all 0.4s;
-        }
-
-        /* ── Table ── */
-        .table-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 12px;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .table-title {
-            font-family: var(--head);
-            font-size: 13px;
-            font-weight: 600;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            color: var(--text-dim);
-        }
-
-        .refresh-badge {
-            font-size: 10px;
-            letter-spacing: 0.12em;
-            color: var(--text-dim);
-            border: 1px solid var(--border);
-            border-radius: 2px;
-            padding: 3px 8px;
-        }
-
-        .table-wrap {
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            overflow: hidden;
-            animation: fadeUp 0.6s 0.2s ease both;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        thead tr {
-            background: var(--bg-panel);
-            border-bottom: 1px solid var(--border-hi);
-        }
-
-        th {
-            font-family: var(--mono);
-            font-size: 10px;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            color: var(--text-dim);
-            padding: 14px 18px;
-            text-align: left;
-            font-weight: 400;
-            white-space: nowrap;
-        }
-
-        tbody tr {
-            border-bottom: 1px solid var(--border);
-            transition: background 0.18s;
-        }
-
-        tbody tr:last-child { border-bottom: none; }
-
-        tbody tr:hover {
-            background: var(--bg-hover);
-            cursor: default;
-        }
-
-        td {
-            padding: 14px 18px;
-            font-size: 13px;
-            color: var(--text);
-            vertical-align: middle;
-            white-space: nowrap;
-        }
-
-        td:first-child {
-            font-family: var(--head);
-            font-size: 15px;
-            font-weight: 600;
-            color: #fff;
-            letter-spacing: 0.04em;
-        }
-
-        td.mac {
-            color: var(--text-dim);
-            letter-spacing: 0.05em;
-        }
-
-        td.ts { color: var(--text-dim); font-size: 12px; }
-
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-family: var(--head);
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
-            padding: 4px 10px;
-            border-radius: 2px;
-        }
-
-        .status-badge.connected {
-            background: rgba(0,230,118,0.08);
-            color: var(--green);
-            border: 1px solid rgba(0,230,118,0.25);
-        }
-
-        .status-badge.disconnected {
-            background: rgba(74,94,80,0.15);
-            color: var(--text-dim);
-            border: 1px solid var(--border);
-        }
-
-        .status-badge .dot {
-            width: 5px;
-            height: 5px;
-            border-radius: 50%;
-            background: currentColor;
-        }
-
-        .status-badge.connected .dot {
-            animation: pulse 2s ease-in-out infinite;
-            box-shadow: 0 0 6px var(--green);
-        }
-
-        .empty-row td {
-            text-align: center;
-            color: var(--text-dim);
-            padding: 40px;
-            font-size: 12px;
-            letter-spacing: 0.1em;
-        }
-
-        /* ── Footer ── */
-        .footer {
-            margin-top: 32px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .footer-text {
-            font-size: 10px;
-            letter-spacing: 0.15em;
-            color: var(--text-dim);
-        }
-
-        #clockDisplay {
-            font-size: 11px;
-            letter-spacing: 0.1em;
-            color: var(--text-dim);
-        }
-    </style>
+/* ── Footer ── */
+.footer {
+    display: flex; justify-content: space-between;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap; gap: 8px;
+}
+.f-l, .f-r { font-size: 11px; color: var(--dim); letter-spacing: 0.03em; }
+</style>
 </head>
 <body>
-<div class="wrapper">
+<div class="shell">
 
-    <!-- Header -->
-    <div class="header">
-        <div class="header-left">
-            <div class="header-eyebrow">// Network Cell Analyzer</div>
-            <div class="header-title">SERVER <span>DASHBOARD</span></div>
+    <nav class="nav">
+        <div class="nav-brand">
+            <div class="nav-logo">
+                <svg viewBox="0 0 19 19" fill="none">
+                    <circle cx="9.5" cy="9.5" r="3.5" fill="#4ade80"/>
+                    <circle cx="9.5" cy="9.5" r="7.8" stroke="#4ade80" stroke-width="1.1" stroke-dasharray="2.5 2.2"/>
+                    <circle cx="9.5" cy="9.5" r="5.2" stroke="rgba(74,222,128,0.35)" stroke-width="0.8"/>
+                </svg>
+            </div>
+            <div>
+                <div class="nav-title">Network Cell Analyzer</div>
+                <div class="nav-label">Server Dashboard</div>
+            </div>
         </div>
         <div class="status-pill" id="statusPill">
-            <div class="status-dot" id="statusDot"></div>
-            <span id="statusText">CHECKING…</span>
+            <span class="status-dot"></span>
+            <span id="statusText">Checking</span>
+        </div>
+    </nav>
+
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-lbl">Connected</div>
+            <div class="stat-num hi" id="connectedCount">—</div>
+        </div>
+        <div class="stat">
+            <div class="stat-lbl">Known Devices</div>
+            <div class="stat-num" id="totalCount">—</div>
+        </div>
+        <div class="stat">
+            <div class="stat-lbl">Last Refresh</div>
+            <div class="stat-num sm" id="syncTime">—</div>
         </div>
     </div>
 
-    <!-- Metrics -->
-    <div class="metrics">
-        <div class="metric-card">
-            <div class="metric-label">Connected</div>
-            <div class="metric-value" id="connectedCount">—</div>
+    <div class="section">
+        <div class="section-bar">
+            <div class="section-title">
+                Active Connections
+                <span class="s-count live" id="connectedBadge">0</span>
+            </div>
+            <div class="section-meta">Auto · 5s</div>
         </div>
-        <div class="metric-card">
-            <div class="metric-label">Total Devices</div>
-            <div class="metric-value" id="totalCount">—</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-label">Last Refresh</div>
-            <div class="metric-value" id="refreshTime" style="font-size:20px; padding-top:8px;">—</div>
+        <div class="t-wrap">
+            <table>
+                <thead><tr>
+                    <th>Device ID</th><th>MAC Address</th><th>First Seen</th><th>Last Seen</th><th>Signal</th>
+                </tr></thead>
+                <tbody id="connectedBody">
+                    <tr class="empty"><td colspan="5">Loading…</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
-    <!-- Table -->
-    <div class="table-header">
-        <div class="table-title">Device Registry</div>
-        <div class="refresh-badge" id="refreshBadge">AUTO · 5s</div>
-    </div>
-    <div class="table-wrap">
-        <table id="devicesTable">
-            <thead>
-                <tr>
-                    <th>Device ID</th>
-                    <th>MAC Address</th>
-                    <th>First Seen</th>
-                    <th>Last Seen</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody id="devicesBody">
-                <tr class="empty-row">
-                    <td colspan="5">LOADING DEVICES…</td>
-                </tr>
-            </tbody>
-        </table>
+    <div class="section">
+        <div class="section-bar">
+            <div class="section-title">
+                Known Devices
+                <span class="s-count" id="disconnectedBadge">0</span>
+            </div>
+        </div>
+        <div class="t-wrap">
+            <table>
+                <thead><tr>
+                    <th>Device ID</th><th>MAC Address</th><th>First Seen</th><th>Last Seen</th><th>Status</th>
+                </tr></thead>
+                <tbody id="disconnectedBody">
+                    <tr class="empty"><td colspan="5">Loading…</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <!-- Footer -->
     <div class="footer">
-        <div class="footer-text">NETWORK CELL ANALYZER · v2.0</div>
-        <div id="clockDisplay">—</div>
+        <div class="f-l">Network Cell Analyzer</div>
+        <div class="f-r" id="clk">—</div>
     </div>
 
 </div>
-
 <script>
-    /* ── Clock ── */
-    function updateClock() {
-        var now = new Date();
-        var h = String(now.getHours()).padStart(2,'0');
-        var m = String(now.getMinutes()).padStart(2,'0');
-        var s = String(now.getSeconds()).padStart(2,'0');
-        document.getElementById('clockDisplay').textContent =
-            now.toDateString().toUpperCase() + ' · ' + h + ':' + m + ':' + s;
+var pad = function(n){ return String(n).padStart(2,'0'); };
+var Mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function tick(){
+    var n = new Date();
+    document.getElementById('clk').textContent =
+        n.getDate()+' '+Mo[n.getMonth()]+' '+n.getFullYear()+
+        ' · '+pad(n.getHours())+':'+pad(n.getMinutes())+':'+pad(n.getSeconds());
+}
+tick(); setInterval(tick, 1000);
+
+function signalClass(device){
+    var v;
+    if(typeof device.signal==='number'){ v=device.signal; }
+    else {
+        var mac=(device.mac_address||'').replace(/[^a-f0-9]/gi,'');
+        var h=0;
+        for(var i=0;i<mac.length;i++) h=(h*31+mac.charCodeAt(i))&0xffff;
+        v=30+(h%70);
     }
-    updateClock();
-    setInterval(updateClock, 1000);
+    if(v>=75) return 's4';
+    if(v>=50) return 's3';
+    if(v>=25) return 's2';
+    return 's1';
+}
+function signalLabel(c){ return {s1:'Weak',s2:'Fair',s3:'Good',s4:'Strong'}[c]; }
+function signalHTML(d){
+    var c=signalClass(d);
+    return '<div class="sig-cell"><div class="signal '+c+'"><span></span><span></span><span></span><span></span></div><span class="sig-lbl">'+signalLabel(c)+'</span></div>';
+}
 
-    /* ── Health check ── */
-    function checkServerHealth() {
-        fetch('/health')
-        .then(function(response) {
-            if (!response.ok) throw new Error('Bad response');
-            return response.json();
-        })
-        .then(function(data) {
-            var pill = document.getElementById('statusPill');
-            var text = document.getElementById('statusText');
-            if (data.status === 'ok') {
-                pill.className = 'status-pill online';
-                text.textContent = 'ONLINE';
-            }
-        })
-        .catch(function() {
-            var pill = document.getElementById('statusPill');
-            var text = document.getElementById('statusText');
-            pill.className = 'status-pill offline';
-            text.textContent = 'OFFLINE';
-        });
-    }
+function checkHealth(){
+    fetch('/health')
+    .then(function(r){if(!r.ok)throw 0;return r.json();})
+    .then(function(d){
+        var p=document.getElementById('statusPill'),t=document.getElementById('statusText');
+        if(d.status==='ok'){p.className='status-pill online';t.textContent='Online';}
+    })
+    .catch(function(){
+        document.getElementById('statusPill').className='status-pill offline';
+        document.getElementById('statusText').textContent='Offline';
+    });
+}
 
-    /* ── Load devices ── */
-    function loadDevices() {
-        fetch('/devices')
-        .then(function(r) { return r.json(); })
-        .then(function(devices) {
-            var body = document.getElementById('devicesBody');
-            var connected = devices.filter(function(d) { return d.status === 'Connected'; }).length;
+function loadDevices(){
+    fetch('/devices')
+    .then(function(r){return r.json();})
+    .then(function(devices){
+        var n=new Date();
+        var conn=devices.filter(function(d){return d.status==='Connected';});
+        var disc=devices.filter(function(d){return d.status!=='Connected';});
 
-            document.getElementById('connectedCount').textContent = connected;
-            document.getElementById('totalCount').textContent = devices.length;
+        document.getElementById('connectedCount').textContent=conn.length;
+        document.getElementById('totalCount').textContent=devices.length;
+        document.getElementById('syncTime').textContent=pad(n.getHours())+':'+pad(n.getMinutes())+':'+pad(n.getSeconds());
+        document.getElementById('connectedBadge').textContent=conn.length;
+        document.getElementById('disconnectedBadge').textContent=disc.length;
 
-            var now = new Date();
-            document.getElementById('refreshTime').textContent =
-                String(now.getHours()).padStart(2,'0') + ':' +
-                String(now.getMinutes()).padStart(2,'0') + ':' +
-                String(now.getSeconds()).padStart(2,'0');
-
-            if (devices.length === 0) {
-                body.innerHTML = '<tr class="empty-row"><td colspan="5">NO DEVICES FOUND</td></tr>';
-                return;
-            }
-
-            var html = '';
-            devices.forEach(function(device) {
-                var isConn = device.status === 'Connected';
-                var badgeClass = isConn ? 'connected' : 'disconnected';
-                var label = isConn ? 'Connected' : 'Disconnected';
-                html += '<tr>' +
-                    '<td>' + device.device_id + '</td>' +
-                    '<td class="mac">' + device.mac_address + '</td>' +
-                    '<td class="ts">' + device.first_seen + '</td>' +
-                    '<td class="ts">' + device.last_seen + '</td>' +
-                    '<td><span class="status-badge ' + badgeClass + '">' +
-                        '<span class="dot"></span>' + label +
-                    '</span></td>' +
-                    '</tr>';
+        if(!conn.length){
+            document.getElementById('connectedBody').innerHTML='<tr class="empty"><td colspan="5">No active connections</td></tr>';
+        } else {
+            var h='';
+            conn.forEach(function(d){
+                h+='<tr><td>'+d.device_id+'</td><td class="mac">'+d.mac_address+'</td><td class="ts">'+d.first_seen+'</td><td class="ts">'+d.last_seen+'</td><td>'+signalHTML(d)+'</td></tr>';
             });
-            body.innerHTML = html;
-        })
-        .catch(function() {
-            document.getElementById('devicesBody').innerHTML =
-                '<tr class="empty-row"><td colspan="5">FAILED TO LOAD DEVICES</td></tr>';
-        });
-    }
+            document.getElementById('connectedBody').innerHTML=h;
+        }
 
-    loadDevices();
-    checkServerHealth();
-    setInterval(loadDevices, 5000);
-    setInterval(checkServerHealth, 2000);
+        if(!disc.length){
+            document.getElementById('disconnectedBody').innerHTML='<tr class="empty"><td colspan="5">No offline devices</td></tr>';
+        } else {
+            var h2='';
+            disc.forEach(function(d){
+                h2+='<tr><td>'+d.device_id+'</td><td class="mac">'+d.mac_address+'</td><td class="ts">'+d.first_seen+'</td><td class="ts">'+d.last_seen+'</td><td><span class="tag">Disconnected</span></td></tr>';
+            });
+            document.getElementById('disconnectedBody').innerHTML=h2;
+        }
+    })
+    .catch(function(){
+        var e='<tr class="empty"><td colspan="5">Failed to load</td></tr>';
+        document.getElementById('connectedBody').innerHTML=e;
+        document.getElementById('disconnectedBody').innerHTML=e;
+    });
+}
+
+loadDevices(); checkHealth();
+setInterval(loadDevices,5000);
+setInterval(checkHealth,2000);
 </script>
 </body>
 </html>
