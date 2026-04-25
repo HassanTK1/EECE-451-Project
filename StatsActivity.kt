@@ -81,6 +81,25 @@ class StatsActivity : AppCompatActivity() {
         btn4G = findViewById(R.id.btn4G)
         btn5G = findViewById(R.id.btn5G)
 
+        val calendar = Calendar.getInstance()
+
+        val toYear = calendar.get(Calendar.YEAR)
+        val toMonth = (calendar.get(Calendar.MONTH) + 1).toString().padStart(2, '0')
+        val toDay = calendar.get(Calendar.DAY_OF_MONTH).toString().padStart(2, '0')
+        val today = "$toYear-$toMonth-$toDay"
+
+        calendar.add(Calendar.DAY_OF_MONTH, -1)
+        val fromYear = calendar.get(Calendar.YEAR)
+        val fromMonth = (calendar.get(Calendar.MONTH) + 1).toString().padStart(2, '0')
+        val fromDay = calendar.get(Calendar.DAY_OF_MONTH).toString().padStart(2, '0')
+        val yesterday = "$fromYear-$fromMonth-$fromDay"
+
+        fromDate = "${yesterday}T00:00:00Z"
+        toDate = "${today}T23:59:59Z"
+
+        tvFrom.text = yesterday
+        tvTo.text = today
+
 
 
         btn2G.setOnClickListener{
