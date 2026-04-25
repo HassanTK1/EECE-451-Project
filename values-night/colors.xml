@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Backgrounds -->
+    <color name="bg_main">#0F0F0F</color>
+    <color name="bg_card">#1E1E1E</color>
+    <color name="bg_card_inset">#2A2A2A</color>
+    <color name="bg_bar_track">#0A0A0A</color>
+    <color name="bg_date_button">#2A2A2A</color>
+    <color name="bg_button_secondary">#2A2A2A</color>
+    <color name="bg_button_unselected">#3A3A3A</color>
+
+    <!-- Text -->
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#AAAAAA</color>
+    <color name="text_tertiary">#888888</color>
+    <color name="text_label">#666666</color>
+    <color name="text_on_accent">#FFFFFF</color>
+
+    <!-- Accents -->
+    <color name="accent_blue">#4A90D9</color>
+    <color name="accent_green">#4CAF50</color>
+    <color name="accent_light_green">#8BC34A</color>
+    <color name="accent_orange">#FF9800</color>
+    <color name="accent_orange_2g">#E67E22</color>
+    <color name="accent_red">#F44336</color>
+    <color name="accent_purple">#9B59B6</color>
+</resources>
