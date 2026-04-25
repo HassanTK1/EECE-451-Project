@@ -1,20 +1,23 @@
-package com.example.networkcellanalyzer.telephony
+package com.example.a451_app
 
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
-import android.telephony.TelephonyManager
-import android.telephony.CellInfoGsm
-import android.telephony.CellInfoWcdma
-import android.telephony.CellInfoLte
+import android.telephony.CellIdentityNr
 import android.telephony.CellInfo
-import com.example.networkcellanalyzer.model.MeasurementRequest
+import android.telephony.CellInfoGsm
+import android.telephony.CellInfoLte
+import android.telephony.CellInfoNr
+import android.telephony.CellInfoWcdma
+import android.telephony.CellSignalStrengthNr
+import android.telephony.TelephonyManager
+import androidx.annotation.RequiresApi
+import com.example.a451_app.model.MeasurementRequest
 import java.time.Instant
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-// this function gives the format so that it matches fastAPI
 fun getCurrentTimestamp(): String {
     return Instant.now().toString()
         .replace("T", " ")
@@ -47,7 +50,6 @@ fun getFreshRegisteredCellBlocking(
                 }
             }
         )
-
         latch.await(1500, TimeUnit.MILLISECONDS)
     } catch (_: Exception) {
     } finally {
@@ -55,6 +57,45 @@ fun getFreshRegisteredCellBlocking(
     }
 
     return result ?: cachedCell
+}
+
+// 5G band reading requires API 31+
+@RequiresApi(Build.VERSION_CODES.S)
+private fun get5GBand(identity: CellIdentityNr): Int? {
+    return identity.bands.firstOrNull()
+}
+
+// 5G measurement build requires API 29+
+@RequiresApi(Build.VERSION_CODES.Q)
+private fun build5GMeasurement(
+    cell: CellInfoNr,
+    deviceId: String,
+    operator: String
+): MeasurementRequest {
+    val signal = cell.cellSignalStrength as CellSignalStrengthNr
+    val identity = cell.cellIdentity as CellIdentityNr
+
+    var snr: Float? = null
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        val sinr = signal.csiSinr
+        snr = if (sinr != CellInfo.UNAVAILABLE) sinr.toFloat() else null
+    }
+
+    var band: Int? = null
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        band = get5GBand(identity)
+    }
+
+    return MeasurementRequest(
+        device_id = deviceId,
+        operator = operator,
+        signal_power = signal.dbm,
+        SNR = snr,
+        network_type = "5G",
+        frequency_band = band,
+        cell_id = identity.nci.toString(),
+        time_stamp = getCurrentTimestamp()
+    )
 }
 
 @SuppressLint("MissingPermission")
@@ -67,13 +108,19 @@ fun readMeasurementFromPhone(context: Context, deviceId: String): MeasurementReq
 
     val cell = getFreshRegisteredCellBlocking(tm, context) ?: return null
 
+    // 5G — API 29+ only
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && cell is CellInfoNr) {
+        return build5GMeasurement(cell, deviceId, operator)
+    }
+
     // 4G
     if (cell is CellInfoLte) {
         val signal = cell.cellSignalStrength
         var snr: Float? = null
         var band: Int? = null
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            snr = signal.rssnr.toFloat()
+            val rssnr = signal.rssnr
+            snr = if (rssnr != CellInfo.UNAVAILABLE) rssnr.toFloat() else null
             band = cell.cellIdentity.bands.firstOrNull()
         }
         return MeasurementRequest(
@@ -87,15 +134,21 @@ fun readMeasurementFromPhone(context: Context, deviceId: String): MeasurementReq
             time_stamp = getCurrentTimestamp()
         )
     }
+
     // 3G
-    else if (cell is CellInfoWcdma) {
+    if (cell is CellInfoWcdma) {
         val signal = cell.cellSignalStrength
+        val ecNoValue: Float? =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                val ecNo = signal.ecNo
+                if (ecNo != CellInfo.UNAVAILABLE) ecNo.toFloat() else null
+            } else null
 
         return MeasurementRequest(
             device_id = deviceId,
             operator = operator,
             signal_power = signal.dbm,
-            SNR = null,
+            SNR = ecNoValue,
             network_type = "3G",
             frequency_band = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 val uarfcn = cell.cellIdentity.uarfcn
@@ -105,8 +158,9 @@ fun readMeasurementFromPhone(context: Context, deviceId: String): MeasurementReq
             time_stamp = getCurrentTimestamp()
         )
     }
+
     // 2G
-    else if (cell is CellInfoGsm) {
+    if (cell is CellInfoGsm) {
         val signal = cell.cellSignalStrength
         return MeasurementRequest(
             device_id = deviceId,
@@ -122,7 +176,6 @@ fun readMeasurementFromPhone(context: Context, deviceId: String): MeasurementReq
             time_stamp = getCurrentTimestamp()
         )
     }
-    else {
-        return null
-    }
+
+    return null
 }
