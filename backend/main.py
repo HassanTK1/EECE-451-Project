@@ -86,6 +86,9 @@ def resp_measurements(device_id: str, body: Measurements_request):
         frequency_band=body.frequency_band,
         cell_id=body.cell_id,
         time_stamp=body.time_stamp,
+        latitude = body.latitude,
+        longtitude = body.longtitude,
+
     )
 
     db.add(new_Measurment)
