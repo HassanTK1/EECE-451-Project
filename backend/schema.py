@@ -35,7 +35,9 @@ class Measurements_request(BaseModel):
     network_type: Literal["2G","3G","4G","5G"]   ### FOCUS - type might be better categorized
     frequency_band: float # review data format
     cell_id: str # maybe str 
-    time_stamp: datetime    
+    time_stamp: datetime
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
 
 
 class Measurements_response(BaseModel):
