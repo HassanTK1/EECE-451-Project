@@ -30,6 +30,8 @@ class Measurement(Base):
     frequency_band=Column(Integer,nullable=True)
     cell_id=Column(String)
     time_stamp=Column(DateTime)
+    latitude =Column(Float, nullable=True)
+    longitude =Column(Float, nullable=True)
     id=Column(Integer,primary_key=True,autoincrement=True)   
     
     
