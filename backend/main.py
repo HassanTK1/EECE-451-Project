@@ -7,6 +7,9 @@ from fastapi.responses import HTMLResponse
 from datetime import timedelta
 from argon2 import PasswordHasher
 from fastapi import Body
+from typing import List
+from sqlalchemy import desc
+
 
 Source = "$argon2id$v=19$m=65536"
 app = FastAPI()
@@ -102,6 +105,35 @@ def resp_measurements(device_id: str, body: Measurements_request):
         server_time=datetime.now()
     )
 
+
+
+@app.get("/connected_coordinates")
+def get_connected_coordinates(db: Session = Depends(get_db)):
+    # Get all connected devices (adjust the filter to match how you mark connected)
+    connected = db.query(Device).all()  # or filter by last_seen freshness, etc.
+
+    results = []
+    for device in connected:
+        # Get latest measurement with coordinates for this device
+        latest = (
+            db.query(Measurement)
+            .filter(Measurement.device_id == device.device_id)
+            .filter(Measurement.latitude.isnot(None))
+            .filter(Measurement.longitude.isnot(None))
+            .order_by(desc(Measurement.time_stamp))
+            .first()
+        )
+        if latest:
+            results.append({
+                "device_id": device.device_id,
+                "latitude": latest.latitude,
+                "longitude": latest.longitude,
+                "signal_power": latest.signal_power,
+                "network_type": latest.network_type,
+                "time_stamp": latest.time_stamp.isoformat()
+            })
+    return results
+    
 @app.get("/stats")
 def get_stats(device_id: str, from_date: datetime, to_date: datetime):
     db = SessionLocal()
