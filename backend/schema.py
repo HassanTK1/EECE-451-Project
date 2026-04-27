@@ -57,5 +57,12 @@ class Stats_response(BaseModel):
     avg_SNR_SNIR: List[Optional[float]]
 
 
+class CoordinatePoint(BaseModel):
+    device_id: str
+    latitude: float
+    longitude: float
+    signal_power: int
+    network_type: str
+    time_stamp: str
 
 
