@@ -8,6 +8,7 @@
 <html>
 <head>
 <title>Network Cell Analyzer</title>
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet"/>
 <style>
 :root {
     --bg:      #e2e2e2;
@@ -79,6 +80,37 @@ body {
 .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
 .status-pill.online .status-dot { animation: blink 2s ease-in-out infinite; }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ── Tabs ── */
+.tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+}
+.tab {
+    padding: 10px 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--dim);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+    margin-bottom: -1px;
+    font-family: var(--sans);
+}
+.tab:hover { color: var(--sub); }
+.tab.active {
+    color: var(--text);
+    border-bottom-color: var(--green);
+}
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; animation: up 0.3s ease both; }
 
 /* ── Stats ── */
 .stats {
@@ -224,6 +256,39 @@ tbody tr:hover td { background: var(--s2); }
     background: var(--s1) !important;
 }
 
+/* ── Map ── */
+#map {
+    width: 100%;
+    height: 600px;
+    border: 1px solid var(--border);
+    border-radius: 0 0 10px 10px;
+    overflow: hidden;
+}
+.map-marker {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    cursor: pointer;
+}
+.maplibregl-popup-content {
+    font-family: var(--sans);
+    font-size: 12px;
+    padding: 10px 14px;
+    border-radius: 6px;
+}
+.popup-id {
+    font-weight: 600;
+    font-family: var(--mono);
+    margin-bottom: 4px;
+    color: var(--text);
+}
+.popup-meta {
+    font-size: 11px;
+    color: var(--dim);
+}
+
 /* ── Footer ── */
 .footer {
     display: flex; justify-content: space-between;
@@ -257,57 +322,82 @@ tbody tr:hover td { background: var(--s2); }
         </div>
     </nav>
 
-    <div class="stats">
-        <div class="stat">
-            <div class="stat-lbl">Connected</div>
-            <div class="stat-num hi" id="connectedCount">—</div>
-        </div>
-        <div class="stat">
-            <div class="stat-lbl">Known Devices</div>
-            <div class="stat-num" id="totalCount">—</div>
-        </div>
-        <div class="stat">
-            <div class="stat-lbl">Last Refresh</div>
-            <div class="stat-num sm" id="syncTime">—</div>
-        </div>
+    <!-- Tab bar -->
+    <div class="tabs">
+        <button class="tab active" data-tab="devices">Devices</button>
+        <button class="tab" data-tab="map">Coverage Map</button>
     </div>
 
-    <div class="section">
-        <div class="section-bar">
-            <div class="section-title">
-                Active Connections
-                <span class="s-count live" id="connectedBadge">0</span>
+    <!-- Devices panel -->
+    <div class="tab-panel active" id="panel-devices">
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-lbl">Connected</div>
+                <div class="stat-num hi" id="connectedCount">—</div>
             </div>
-            <div class="section-meta">Auto · 5s</div>
+            <div class="stat">
+                <div class="stat-lbl">Known Devices</div>
+                <div class="stat-num" id="totalCount">—</div>
+            </div>
+            <div class="stat">
+                <div class="stat-lbl">Last Refresh</div>
+                <div class="stat-num sm" id="syncTime">—</div>
+            </div>
         </div>
-        <div class="t-wrap">
-            <table>
-                <thead><tr>
-                    <th>Device ID</th><th>MAC Address</th><th>First Seen</th><th>Last Seen</th><th>Signal</th>
-                </tr></thead>
-                <tbody id="connectedBody">
-                    <tr class="empty"><td colspan="5">Loading…</td></tr>
-                </tbody>
-            </table>
+
+        <div class="section">
+            <div class="section-bar">
+                <div class="section-title">
+                    Active Connections
+                    <span class="s-count live" id="connectedBadge">0</span>
+                </div>
+                <div class="section-meta">Auto · 5s</div>
+            </div>
+            <div class="t-wrap">
+                <table>
+                    <thead><tr>
+                        <th>Device ID</th><th>MAC Address</th><th>First Seen</th><th>Last Seen</th><th>Signal</th>
+                    </tr></thead>
+                    <tbody id="connectedBody">
+                        <tr class="empty"><td colspan="5">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
+
+        <div class="section">
+            <div class="section-bar">
+                <div class="section-title">
+                    Known Devices
+                    <span class="s-count" id="disconnectedBadge">0</span>
+                </div>
+            </div>
+            <div class="t-wrap">
+                <table>
+                    <thead><tr>
+                        <th>Device ID</th><th>MAC Address</th><th>First Seen</th><th>Last Seen</th><th>Status</th>
+                    </tr></thead>
+                    <tbody id="disconnectedBody">
+                        <tr class="empty"><td colspan="5">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
 
-    <div class="section">
-        <div class="section-bar">
-            <div class="section-title">
-                Known Devices
-                <span class="s-count" id="disconnectedBadge">0</span>
+    <!-- Map panel -->
+    <div class="tab-panel" id="panel-map">
+        <div class="section">
+            <div class="section-bar">
+                <div class="section-title">
+                    Connected Devices Map
+                    <span class="s-count live" id="mapBadge">0</span>
+                </div>
+                <div class="section-meta">Auto · 5s</div>
             </div>
-        </div>
-        <div class="t-wrap">
-            <table>
-                <thead><tr>
-                    <th>Device ID</th><th>MAC Address</th><th>First Seen</th><th>Last Seen</th><th>Status</th>
-                </tr></thead>
-                <tbody id="disconnectedBody">
-                    <tr class="empty"><td colspan="5">Loading…</td></tr>
-                </tbody>
-            </table>
+            <div id="map"></div>
         </div>
     </div>
 
@@ -317,6 +407,8 @@ tbody tr:hover td { background: var(--s2); }
     </div>
 
 </div>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script>
 var pad = function(n){ return String(n).padStart(2,'0'); };
 var Mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -328,6 +420,24 @@ function tick(){
         ' · '+pad(n.getHours())+':'+pad(n.getMinutes())+':'+pad(n.getSeconds());
 }
 tick(); setInterval(tick, 1000);
+
+/* ── Tabs ── */
+var mapInitialized = false;
+document.querySelectorAll('.tab').forEach(function(btn){
+    btn.addEventListener('click', function(){
+        document.querySelectorAll('.tab').forEach(function(b){ b.classList.remove('active'); });
+        document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
+        btn.classList.add('active');
+        document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+
+        if (btn.dataset.tab === 'map') {
+            initMap();        // safe to call multiple times
+            loadMapPoints();  // refresh on each tab open
+            // Force MapLibre to recompute size now that the panel is visible
+            setTimeout(function(){ if (mlMap) mlMap.resize(); }, 50);
+        }
+    });
+});
 
 function signalClass(device){
     var v;
@@ -403,9 +513,81 @@ function loadDevices(){
     });
 }
 
+/* ── Map ── */
+var mlMap = null;
+var mapMarkers = [];
+
+function initMap(){
+    if (mapInitialized) return;
+    mapInitialized = true;
+    mlMap = new maplibregl.Map({
+        container: 'map',
+        style: 'https://tiles.openfreemap.org/styles/liberty',
+        center: [35.5018, 33.8938],
+        zoom: 10
+    });
+}
+
+function colorForSignal(dbm){
+    if (dbm > -70)  return '#22c55e';
+    if (dbm > -85)  return '#84cc16';
+    if (dbm > -100) return '#fbbf24';
+    return '#f87171';
+}
+
+function loadMapPoints(){
+    fetch('/connected_coordinates')
+    .then(function(r){ return r.json(); })
+    .then(function(points){
+        document.getElementById('mapBadge').textContent = points.length;
+
+        // Clear old markers
+        mapMarkers.forEach(function(m){ m.remove(); });
+        mapMarkers = [];
+
+        if (!points.length || !mlMap) return;
+
+        points.forEach(function(p){
+            var el = document.createElement('div');
+            el.className = 'map-marker';
+            el.style.background = colorForSignal(p.signal_power);
+
+            var popup = new maplibregl.Popup({ offset: 14, closeButton: false })
+                .setHTML(
+                    '<div class="popup-id">' + p.device_id + '</div>' +
+                    '<div class="popup-meta">' + p.network_type + ' · ' + p.signal_power + ' dBm</div>' +
+                    '<div class="popup-meta">' + p.time_stamp + '</div>'
+                );
+
+            var marker = new maplibregl.Marker({ element: el })
+                .setLngLat([p.longitude, p.latitude])
+                .setPopup(popup)
+                .addTo(mlMap);
+
+            mapMarkers.push(marker);
+        });
+
+        // Auto-fit on first load
+        if (points.length > 0) {
+            var bounds = new maplibregl.LngLatBounds();
+            points.forEach(function(p){ bounds.extend([p.longitude, p.latitude]); });
+            mlMap.fitBounds(bounds, { padding: 60, maxZoom: 14, duration: 0 });
+        }
+    })
+    .catch(function(){});
+}
+
+/* ── Init ── */
 loadDevices(); checkHealth();
-setInterval(loadDevices,5000);
-setInterval(checkHealth,2000);
+setInterval(loadDevices, 5000);
+setInterval(checkHealth, 2000);
+
+// Refresh map data every 5s while map tab is active
+setInterval(function(){
+    if (document.getElementById('panel-map').classList.contains('active')) {
+        loadMapPoints();
+    }
+}, 5000);
 </script>
 </body>
 </html>
