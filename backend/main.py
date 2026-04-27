@@ -9,6 +9,9 @@ from argon2 import PasswordHasher
 from fastapi import Body
 from typing import List
 from sqlalchemy import desc
+from fastapi import Depends
+from sqlalchemy.orm import Session
+
 
 
 Source = "$argon2id$v=19$m=65536"
@@ -90,7 +93,7 @@ def resp_measurements(device_id: str, body: Measurements_request):
         cell_id=body.cell_id,
         time_stamp=body.time_stamp,
         latitude = body.latitude,
-        longtitude = body.longtitude,
+        longitude = body.longitude,
 
     )
 
@@ -108,13 +111,17 @@ def resp_measurements(device_id: str, body: Measurements_request):
 
 
 @app.get("/connected_coordinates")
-def get_connected_coordinates(db: Session = Depends(get_db)):
-    # Get all connected devices (adjust the filter to match how you mark connected)
-    connected = db.query(Device).all()  # or filter by last_seen freshness, etc.
+def get_connected_coordinates():
+    db = SessionLocal()
+    now = datetime.now()
+    devices = db.query(Device).all()
 
     results = []
-    for device in connected:
-        # Get latest measurement with coordinates for this device
+    for device in devices:
+        # Only include currently connected devices (matching /devices logic: <30s)
+        if (now - device.last_seen).total_seconds() >= 30:
+            continue
+
         latest = (
             db.query(Measurement)
             .filter(Measurement.device_id == device.device_id)
@@ -132,6 +139,7 @@ def get_connected_coordinates(db: Session = Depends(get_db)):
                 "network_type": latest.network_type,
                 "time_stamp": latest.time_stamp.isoformat()
             })
+    db.close()
     return results
     
 @app.get("/stats")
