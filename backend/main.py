@@ -11,6 +11,7 @@ from typing import List
 from sqlalchemy import desc
 from fastapi import Depends
 from sqlalchemy.orm import Session
+from auth import create_token, require_auth, get_current_user
 
 
 
@@ -18,9 +19,12 @@ Source = "$argon2id$v=19$m=65536"
 app = FastAPI()
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
-
+# authenticated access to dashboard
 @app.get("/dashboard", response_class=HTMLResponse)
-def dashboard():
+def dashboard(request: Request):
+    user = get_current_user(request)
+    if not user:
+        return RedirectResponse(url="/index", status_code=302)
     with open("static/dashboard.html") as f:
         return f.read()
 @app.get("/test")
@@ -109,7 +113,8 @@ def resp_measurements(device_id: str, body: Measurements_request):
     )
 
 @app.get("/global_stats")
-def get_global_stats():
+def get_global_stats(request: Request):
+    require_auth(request)
     db = SessionLocal()
     records = db.query(Measurement).all()
 
@@ -173,7 +178,8 @@ def get_global_stats():
     }
 
 @app.get("/connected_coordinates")
-def get_connected_coordinates():
+def get_connected_coordinates(request: Request):
+    require_auth(request)
     db = SessionLocal()
     now = datetime.now()
     devices = db.query(Device).all()
@@ -271,8 +277,16 @@ def get_stats(device_id: str, from_date: datetime, to_date: datetime):
         "avg_SNR_SNIR": avg_SNR_SNIR
     }
 
+
+@app.post("/logout")
+def logout():
+    response = JSONResponse(content={"response": "ok"})
+    response.delete_cookie("session_token")
+    return response
+
 @app.get("/devices")
-def get_devices():
+def get_devices(request: Request):
+    require_auth(request)
     db = SessionLocal()
     devices = db.query(Device).all()
     db.close()
@@ -303,4 +317,14 @@ def checkCreds(body: Login_request = Body(...)):
     if password != "1234":
         return {"response": "pass"}
 
-    return {"response": "ok"}
+    token = create_token(username)
+    response = JSONResponse(content={"response": "ok"})
+    response.set_cookie(
+        key="session_token",
+        value=token,
+        httponly=True,       # JS cannot read the cookie
+        secure=False,        # set True if using HTTPS
+        samesite="lax",
+        max_age=43200        # 12 hours
+    )
+    return response
