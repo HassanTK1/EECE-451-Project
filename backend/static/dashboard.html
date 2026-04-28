@@ -48,7 +48,7 @@ body {
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Nav ── */
+/* Nav */
 .nav {
     display: flex;
     align-items: center;
@@ -60,7 +60,6 @@ body {
     gap: 14px;
 }
 .nav-brand { display: flex; align-items: center; gap: 13px; }
-
 .nav-title { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; color: var(--text); }
 .nav-label { font-size: 11px; color: var(--dim); margin-top: 2px; }
 
@@ -81,7 +80,7 @@ body {
 .status-pill.online .status-dot { animation: blink 2s ease-in-out infinite; }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
 
-/* ── Tabs ── */
+/* Tabs */
 .tabs {
     display: flex;
     gap: 4px;
@@ -108,11 +107,10 @@ body {
     color: var(--text);
     border-bottom-color: var(--green);
 }
-
 .tab-panel { display: none; }
 .tab-panel.active { display: block; animation: up 0.3s ease both; }
 
-/* ── Stats ── */
+/* Stats grid */
 .stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -140,9 +138,8 @@ body {
 .stat-num.hi { color: var(--green); }
 .stat-num.sm { font-size: 17px; font-weight: 500; letter-spacing: -0.01em; color: var(--sub); padding-top: 8px; }
 
-/* ── Section ── */
+/* Section */
 .section { margin-bottom: 28px; }
-
 .section-bar {
     display: flex;
     align-items: center;
@@ -170,14 +167,13 @@ body {
 .s-count.live { color: var(--green); }
 .section-meta { font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.07em; }
 
-/* ── Table ── */
+/* Tables */
 .t-wrap {
     border: 1px solid var(--border);
     border-radius: 0 0 10px 10px;
     overflow: hidden;
 }
 table { width: 100%; border-collapse: collapse; }
-
 thead tr {
     background: var(--s1);
     border-bottom: 1px solid var(--border);
@@ -191,11 +187,9 @@ th {
     white-space: nowrap;
 }
 th + th { border-left: 1px solid var(--border); }
-
 tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
 tbody tr:last-child { border-bottom: none; }
 tbody tr:hover { background: rgba(255,255,255,0.025); }
-
 td {
     padding: 12px 16px;
     font-size: 13px; color: var(--sub);
@@ -206,10 +200,9 @@ td + td { border-left: 1px solid var(--border); }
 td:first-child { color: var(--text); font-weight: 600; letter-spacing: -0.01em; }
 td.mac { font-family: var(--mono); font-size: 12px; color: var(--dim); letter-spacing: 0.04em; }
 td.ts  { font-size: 12px; color: var(--dim); }
-
 tbody tr:hover td { background: var(--s2); }
 
-/* ── Signal ── */
+/* Signal bars (devices tab) */
 .signal {
     display: inline-flex;
     align-items: flex-end;
@@ -220,7 +213,6 @@ tbody tr:hover td { background: var(--s2); }
 .signal span:nth-child(2) { height: 8px; }
 .signal span:nth-child(3) { height: 11px; }
 .signal span:nth-child(4) { height: 14px; }
-
 .signal.s1 span:nth-child(1) { background: var(--red); }
 .signal.s2 span:nth-child(1),
 .signal.s2 span:nth-child(2) { background: var(--amber); }
@@ -228,7 +220,6 @@ tbody tr:hover td { background: var(--s2); }
 .signal.s3 span:nth-child(2),
 .signal.s3 span:nth-child(3) { background: var(--green); }
 .signal.s4 span               { background: var(--green); }
-
 .sig-cell { display: flex; align-items: center; gap: 10px; }
 .sig-lbl  { font-size: 12px; font-weight: 500; color: var(--sub); }
 .signal.s1 + .sig-lbl { color: var(--red);   }
@@ -236,7 +227,7 @@ tbody tr:hover td { background: var(--s2); }
 .signal.s3 + .sig-lbl { color: var(--green); }
 .signal.s4 + .sig-lbl { color: var(--green); }
 
-/* ── Status tag ── */
+/* Status tag */
 .tag {
     display: inline-block;
     font-size: 10px; font-weight: 600;
@@ -256,7 +247,7 @@ tbody tr:hover td { background: var(--s2); }
     background: var(--s1) !important;
 }
 
-/* ── Map ── */
+/* Map */
 #map {
     width: 100%;
     height: 600px;
@@ -289,7 +280,18 @@ tbody tr:hover td { background: var(--s2); }
     color: var(--dim);
 }
 
-/* ── Footer ── */
+/* Stats progress bars (statistics tab) */
+.pct-cell { display: flex; align-items: center; gap: 10px; min-width: 180px; }
+.pct-bar { flex: 1; height: 8px; background: var(--s3); border-radius: 4px; overflow: hidden; border: 1px solid var(--border2); }
+.pct-fill { height: 100%; transition: width 0.4s ease; }
+.pct-val { font-size: 12px; color: var(--sub); font-weight: 600; min-width: 42px; text-align: right; }
+.dbm-val { font-family: var(--mono); font-size: 12px; }
+.dbm-val.good { color: var(--green); }
+.dbm-val.fair { color: var(--amber); }
+.dbm-val.poor { color: var(--red); }
+.dbm-val.dim  { color: var(--dim); }
+
+/* Footer */
 .footer {
     display: flex; justify-content: space-between;
     padding-top: 20px;
@@ -326,9 +328,10 @@ tbody tr:hover td { background: var(--s2); }
     <div class="tabs">
         <button class="tab active" data-tab="devices">Devices</button>
         <button class="tab" data-tab="map">Coverage Map</button>
+        <button class="tab" data-tab="stats">Statistics</button>
     </div>
 
-    <!-- Devices panel -->
+    <!-- ============ Devices panel ============ -->
     <div class="tab-panel active" id="panel-devices">
 
         <div class="stats">
@@ -387,7 +390,7 @@ tbody tr:hover td { background: var(--s2); }
 
     </div>
 
-    <!-- Map panel -->
+    <!-- ============ Map panel ============ -->
     <div class="tab-panel" id="panel-map">
         <div class="section">
             <div class="section-bar">
@@ -399,6 +402,60 @@ tbody tr:hover td { background: var(--s2); }
             </div>
             <div id="map"></div>
         </div>
+    </div>
+
+    <!-- ============ Statistics panel ============ -->
+    <div class="tab-panel" id="panel-stats">
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-lbl">Total Measurements</div>
+                <div class="stat-num" id="totalMeasurements">—</div>
+            </div>
+            <div class="stat">
+                <div class="stat-lbl">Avg Signal (Overall)</div>
+                <div class="stat-num hi" id="avgSignalOverall">—</div>
+            </div>
+            <div class="stat">
+                <div class="stat-lbl">Last Refresh</div>
+                <div class="stat-num sm" id="statsSyncTime">—</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-bar">
+                <div class="section-title">Operator Connectivity</div>
+                <div class="section-meta">% of measurements</div>
+            </div>
+            <div class="t-wrap">
+                <table>
+                    <thead><tr>
+                        <th>Operator</th><th>Connectivity</th><th>Avg Signal</th>
+                    </tr></thead>
+                    <tbody id="operatorStatsBody">
+                        <tr class="empty"><td colspan="3">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-bar">
+                <div class="section-title">Network Type Connectivity</div>
+                <div class="section-meta">% of measurements</div>
+            </div>
+            <div class="t-wrap">
+                <table>
+                    <thead><tr>
+                        <th>Network</th><th>Connectivity</th><th>Avg Signal</th>
+                    </tr></thead>
+                    <tbody id="networkStatsBody">
+                        <tr class="empty"><td colspan="3">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
 
     <div class="footer">
@@ -421,7 +478,7 @@ function tick(){
 }
 tick(); setInterval(tick, 1000);
 
-/* ── Tabs ── */
+/* ── Tab switching ── */
 var mapInitialized = false;
 document.querySelectorAll('.tab').forEach(function(btn){
     btn.addEventListener('click', function(){
@@ -431,14 +488,17 @@ document.querySelectorAll('.tab').forEach(function(btn){
         document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
 
         if (btn.dataset.tab === 'map') {
-            initMap();        // safe to call multiple times
-            loadMapPoints();  // refresh on each tab open
-            // Force MapLibre to recompute size now that the panel is visible
+            initMap();
+            loadMapPoints();
             setTimeout(function(){ if (mlMap) mlMap.resize(); }, 50);
+        }
+        if (btn.dataset.tab === 'stats') {
+            loadGlobalStats();
         }
     });
 });
 
+/* ── Devices tab helpers ── */
 function signalClass(device){
     var v;
     if(typeof device.signal==='number'){ v=device.signal; }
@@ -513,7 +573,7 @@ function loadDevices(){
     });
 }
 
-/* ── Map ── */
+/* ── Map tab ── */
 var mlMap = null;
 var mapMarkers = [];
 
@@ -541,7 +601,6 @@ function loadMapPoints(){
     .then(function(points){
         document.getElementById('mapBadge').textContent = points.length;
 
-        // Clear old markers
         mapMarkers.forEach(function(m){ m.remove(); });
         mapMarkers = [];
 
@@ -567,7 +626,6 @@ function loadMapPoints(){
             mapMarkers.push(marker);
         });
 
-        // Auto-fit on first load
         if (points.length > 0) {
             var bounds = new maplibregl.LngLatBounds();
             points.forEach(function(p){ bounds.extend([p.longitude, p.latitude]); });
@@ -577,15 +635,78 @@ function loadMapPoints(){
     .catch(function(){});
 }
 
-/* ── Init ── */
-loadDevices(); checkHealth();
+/* ── Statistics tab ── */
+function dbmClass(dbm) {
+    if (dbm === 0 || dbm == null) return 'dim';
+    if (dbm > -85) return 'good';
+    if (dbm > -100) return 'fair';
+    return 'poor';
+}
+
+function pctRow(name, color, pct, dbm) {
+    var pctNum = (pct * 100).toFixed(1);
+    var dbmCls = dbmClass(dbm);
+    var dbmText = dbm ? dbm.toFixed(1) + ' dBm' : '—';
+    return '<tr>' +
+        '<td><span style="color:' + color + ';font-weight:600">' + name + '</span></td>' +
+        '<td><div class="pct-cell"><div class="pct-bar"><div class="pct-fill" style="width:' + pctNum + '%;background:' + color + '"></div></div><span class="pct-val">' + pctNum + '%</span></div></td>' +
+        '<td><span class="dbm-val ' + dbmCls + '">' + dbmText + '</span></td>' +
+    '</tr>';
+}
+
+function loadGlobalStats() {
+    fetch('/global_stats')
+    .then(function(r){ return r.json(); })
+    .then(function(s) {
+        var n = new Date();
+        document.getElementById('totalMeasurements').textContent = s.total_measurements;
+        document.getElementById('avgSignalOverall').textContent =
+            s.total_measurements > 0 ? s.avg_signal_power_overall.toFixed(1) + ' dBm' : '—';
+        document.getElementById('statsSyncTime').textContent =
+            pad(n.getHours()) + ':' + pad(n.getMinutes()) + ':' + pad(n.getSeconds());
+
+        if (s.total_measurements > 0) {
+            var opH = '';
+            opH += pctRow('Touch', '#4CAF50', s.avg_connectivity_operator[0], s.avg_signal_power_operator[0]);
+            opH += pctRow('Alfa',  '#4A90D9', s.avg_connectivity_operator[1], s.avg_signal_power_operator[1]);
+            document.getElementById('operatorStatsBody').innerHTML = opH;
+        } else {
+            document.getElementById('operatorStatsBody').innerHTML =
+                '<tr class="empty"><td colspan="3">No data yet</td></tr>';
+        }
+
+        if (s.total_measurements > 0) {
+            var netH = '';
+            netH += pctRow('2G', '#E67E22', s.avg_connectivity_network[0], s.avg_signal_power_networkType[0]);
+            netH += pctRow('3G', '#4CAF50', s.avg_connectivity_network[1], s.avg_signal_power_networkType[1]);
+            netH += pctRow('4G', '#4A90D9', s.avg_connectivity_network[2], s.avg_signal_power_networkType[2]);
+            netH += pctRow('5G', '#9B59B6', s.avg_connectivity_network[3], s.avg_signal_power_networkType[3]);
+            document.getElementById('networkStatsBody').innerHTML = netH;
+        } else {
+            document.getElementById('networkStatsBody').innerHTML =
+                '<tr class="empty"><td colspan="3">No data yet</td></tr>';
+        }
+    })
+    .catch(function(){
+        var e = '<tr class="empty"><td colspan="3">Failed to load</td></tr>';
+        document.getElementById('operatorStatsBody').innerHTML = e;
+        document.getElementById('networkStatsBody').innerHTML = e;
+    });
+}
+
+/* ── Init & periodic refresh ── */
+loadDevices();
+checkHealth();
 setInterval(loadDevices, 5000);
 setInterval(checkHealth, 2000);
 
-// Refresh map data every 5s while map tab is active
+// Refresh map / stats every 5s while their tabs are active
 setInterval(function(){
     if (document.getElementById('panel-map').classList.contains('active')) {
         loadMapPoints();
+    }
+    if (document.getElementById('panel-stats').classList.contains('active')) {
+        loadGlobalStats();
     }
 }, 5000);
 </script>
