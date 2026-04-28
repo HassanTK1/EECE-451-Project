@@ -323,7 +323,7 @@ def checkCreds(body: Login_request = Body(...)):
         key="session_token",
         value=token,
         httponly=True,       # JS cannot read the cookie
-        secure=False,        # set True if using HTTPS
+        secure=True,        # set True if using HTTPS
         samesite="lax",
         max_age=43200        # 12 hours
     )
