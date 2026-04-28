@@ -192,43 +192,54 @@ body {
 </div>
 
 <script>
-const SERVER_BASE_URL = "https://eece-451-project.onrender.com ";
+const SERVER_BASE_URL = " ";
 
 document.addEventListener('keydown', function(e){
-    if(e.key==='Enter') login();
+    if (e.key === 'Enter') login();
 });
 
-async function login(){
+async function login() {
     var username = document.getElementById('username').value.trim();
     var password = document.getElementById('password').value;
     var err = document.getElementById('errorText');
 
-    err.textContent='';
-    err.className='error';
+    err.textContent = '';
+    err.className = 'error';
 
-    function setError(msg){
-        err.textContent=msg;
-        err.className='error show';
+    function setError(msg) {
+        err.textContent = msg;
+        err.className = 'error show';
     }
 
     try {
-        var response = await ffetch('/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username: username, password: password })
-})
-.then(function(r) { return r.json(); })
-.then(function(data) {
-    if (data.response === 'ok') {
-        window.location.href = '/dashboard';  // cookie already set by server
-    } else if (data.response === 'user') {
-        // show "invalid username" error
-    } else if (data.response === 'pass') {
-        // show "wrong password" error
+        var response = await fetch('/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: username,
+                password: password
+            })
+        });
+
+        var data = await response.json();
+
+        if (data.response === 'ok') {
+            window.location.href = '/dashboard';
+        } else if (data.response === 'user') {
+            setError('Wrong username');
+        } else if (data.response === 'pass') {
+            setError('Wrong password');
+        } else {
+            setError('Unexpected server response');
+        }
+
+    } catch (e) {
+        console.error(e);
+        setError('Cannot connect to server');
     }
-});
 }
 </script>
+
 
 </body>
 </html>
