@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Body, Reques
 from datetime import datetime, UTC
 from schema import *
 from database import *
@@ -12,7 +12,6 @@ from sqlalchemy import desc
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from auth import create_token, require_auth, get_current_user
-from fastapi import FastAPI, Body, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 
 
@@ -327,6 +326,8 @@ def checkCreds(body: Login_request = Body(...)):
         httponly=True,       # JS cannot read the cookie
         secure=True,        # set True if using HTTPS
         samesite="lax",
-        max_age=43200        # 12 hours
+        max_age=43200,
+        path = "/"
+        # 12 hours
     )
     return response
