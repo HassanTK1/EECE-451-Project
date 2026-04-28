@@ -8,6 +8,8 @@ data class MeasurementRequest (
     val network_type: String,
     val frequency_band: Int?,
     val cell_id: String,
-    val time_stamp: String
+    val time_stamp: String,
+    val latitude: Double? = null,
+    val longitude: Double? = null
 
 )
