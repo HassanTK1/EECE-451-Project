@@ -228,10 +228,7 @@ async function login(){
             return;
         }
 
-        if (data.response==='ok') {
-            localStorage.setItem('logged_in','true');
-            window.location.href='/dashboard';
-        }
+        if (data.response === 'ok') {window.location.href = '/dashboard'};
         else if (data.response==='user') setError('Wrong username');
         else if (data.response==='pass') setError('Wrong password');
         else setError('Unexpected server response');
