@@ -108,7 +108,69 @@ def resp_measurements(device_id: str, body: Measurements_request):
         server_time=datetime.now()
     )
 
+@app.get("/global_stats")
+def get_global_stats():
+    db = SessionLocal()
+    records = db.query(Measurement).all()
 
+    operator_label = {"touch": 0, "alfa": 1}
+    avg_connectivity_operator = [0, 0]
+    operator_signal_sum = [0, 0]
+    operator_signal_count = [0, 0]
+
+    network_label = {"2G": 0, "3G": 1, "4G": 2, "5G": 3}
+    avg_connectivity_network = [0, 0, 0, 0]
+    avg_signal_power_networkType = [0, 0, 0, 0]
+    network_count = [0, 0, 0, 0]
+
+    avg_signal_power_overall = 0
+    total_count = 0
+
+    for record in records:
+        total_count += 1
+        avg_signal_power_overall += record.signal_power
+
+        if record.operator in operator_label:
+            i = operator_label[record.operator]
+            avg_connectivity_operator[i] += 1
+            operator_signal_sum[i] += record.signal_power
+            operator_signal_count[i] += 1
+
+        if record.network_type in network_label:
+            i = network_label[record.network_type]
+            avg_connectivity_network[i] += 1
+            avg_signal_power_networkType[i] += record.signal_power
+            network_count[i] += 1
+
+    if total_count > 0:
+        avg_connectivity_operator = [c / total_count for c in avg_connectivity_operator]
+        avg_connectivity_network = [c / total_count for c in avg_connectivity_network]
+        avg_signal_power_overall = avg_signal_power_overall / total_count
+    else:
+        avg_signal_power_overall = 0
+
+    operator_avg_signal = []
+    for i in range(2):
+        if operator_signal_count[i] > 0:
+            operator_avg_signal.append(operator_signal_sum[i] / operator_signal_count[i])
+        else:
+            operator_avg_signal.append(0)
+
+    for i in range(4):
+        if network_count[i] > 0:
+            avg_signal_power_networkType[i] = avg_signal_power_networkType[i] / network_count[i]
+        else:
+            avg_signal_power_networkType[i] = 0
+
+    db.close()
+    return {
+        "total_measurements": total_count,
+        "avg_connectivity_operator": avg_connectivity_operator,
+        "avg_connectivity_network": avg_connectivity_network,
+        "avg_signal_power_networkType": avg_signal_power_networkType,
+        "avg_signal_power_operator": operator_avg_signal,
+        "avg_signal_power_overall": avg_signal_power_overall
+    }
 
 @app.get("/connected_coordinates")
 def get_connected_coordinates():
