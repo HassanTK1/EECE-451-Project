@@ -2,6 +2,7 @@ package com.example.a451_app
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.location.Location
 import android.os.Build
 import android.telephony.CellIdentityNr
 import android.telephony.CellInfo
@@ -13,10 +14,60 @@ import android.telephony.CellSignalStrengthNr
 import android.telephony.TelephonyManager
 import androidx.annotation.RequiresApi
 import com.example.a451_app.model.MeasurementRequest
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.CancellationTokenSource
 import java.time.Instant
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+
+@SuppressLint("MissingPermission")
+fun getCurrentLocationBlocking(context: Context): Location? {
+    val client = LocationServices.getFusedLocationProviderClient(context)
+    var result: Location? = null
+    val latch = CountDownLatch(1)
+
+    // Create a background looper for the callback to run on
+    val handlerThread = android.os.HandlerThread("LocationThread")
+    handlerThread.start()
+    val looper = handlerThread.looper
+    val executor = java.util.concurrent.Executors.newSingleThreadExecutor()
+
+    // Try lastLocation first
+    client.lastLocation
+        .addOnSuccessListener(executor, { loc ->
+            if (loc != null) result = loc
+            latch.countDown()
+        })
+        .addOnFailureListener(executor, {
+            latch.countDown()
+        })
+
+    latch.await(3000, TimeUnit.MILLISECONDS)
+
+    if (result != null) {
+        handlerThread.quitSafely()
+        return result
+    }
+
+    // Fresh fix if no cache
+    val freshLatch = CountDownLatch(1)
+    val cts = CancellationTokenSource()
+
+    client.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, cts.token)
+        .addOnSuccessListener(executor, { loc ->
+            result = loc
+            freshLatch.countDown()
+        })
+        .addOnFailureListener(executor, {
+            freshLatch.countDown()
+        })
+
+    freshLatch.await(5000, TimeUnit.MILLISECONDS)
+    handlerThread.quitSafely()
+    return result
+}
 
 fun getCurrentTimestamp(): String {
     return Instant.now().toString()
@@ -59,18 +110,18 @@ fun getFreshRegisteredCellBlocking(
     return result ?: cachedCell
 }
 
-// 5G band reading requires API 31+
 @RequiresApi(Build.VERSION_CODES.S)
 private fun get5GBand(identity: CellIdentityNr): Int? {
     return identity.bands.firstOrNull()
 }
 
-// 5G measurement build requires API 29+
 @RequiresApi(Build.VERSION_CODES.Q)
 private fun build5GMeasurement(
     cell: CellInfoNr,
     deviceId: String,
-    operator: String
+    operator: String,
+    lat: Double?,
+    lon: Double?
 ): MeasurementRequest {
     val signal = cell.cellSignalStrength as CellSignalStrengthNr
     val identity = cell.cellIdentity as CellIdentityNr
@@ -94,7 +145,9 @@ private fun build5GMeasurement(
         network_type = "5G",
         frequency_band = band,
         cell_id = identity.nci.toString(),
-        time_stamp = getCurrentTimestamp()
+        time_stamp = getCurrentTimestamp(),
+        latitude = lat,
+        longitude = lon
     )
 }
 
@@ -108,9 +161,14 @@ fun readMeasurementFromPhone(context: Context, deviceId: String): MeasurementReq
 
     val cell = getFreshRegisteredCellBlocking(tm, context) ?: return null
 
+    val location = getCurrentLocationBlocking(context)
+    val lat = location?.latitude
+    val lon = location?.longitude
+    android.util.Log.d("LOC_DEBUG", "Got location: lat=$lat, lon=$lon")
+
     // 5G — API 29+ only
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && cell is CellInfoNr) {
-        return build5GMeasurement(cell, deviceId, operator)
+        return build5GMeasurement(cell, deviceId, operator, lat, lon)
     }
 
     // 4G
@@ -131,31 +189,31 @@ fun readMeasurementFromPhone(context: Context, deviceId: String): MeasurementReq
             network_type = "4G",
             frequency_band = band,
             cell_id = cell.cellIdentity.ci.toString(),
-            time_stamp = getCurrentTimestamp()
+            time_stamp = getCurrentTimestamp(),
+            latitude = lat,
+            longitude = lon
         )
     }
 
     // 3G
     if (cell is CellInfoWcdma) {
         val signal = cell.cellSignalStrength
-        val ecNoValue: Float? =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                val ecNo = signal.ecNo
-                if (ecNo != CellInfo.UNAVAILABLE) ecNo.toFloat() else null
-            } else null
+
 
         return MeasurementRequest(
             device_id = deviceId,
             operator = operator,
             signal_power = signal.dbm,
-            SNR = ecNoValue,
+            SNR = null,
             network_type = "3G",
             frequency_band = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 val uarfcn = cell.cellIdentity.uarfcn
                 if (uarfcn != CellInfo.UNAVAILABLE) uarfcn else null
             } else null,
             cell_id = cell.cellIdentity.cid.toString(),
-            time_stamp = getCurrentTimestamp()
+            time_stamp = getCurrentTimestamp(),
+            latitude = lat,
+            longitude = lon
         )
     }
 
@@ -173,7 +231,9 @@ fun readMeasurementFromPhone(context: Context, deviceId: String): MeasurementReq
                 if (arfcn != CellInfo.UNAVAILABLE) arfcn else null
             } else null,
             cell_id = cell.cellIdentity.cid.toString(),
-            time_stamp = getCurrentTimestamp()
+            time_stamp = getCurrentTimestamp(),
+            latitude = lat,
+            longitude = lon
         )
     }
 
