@@ -192,7 +192,7 @@ body {
 </div>
 
 <script>
-const SERVER_BASE_URL = "";
+const SERVER_BASE_URL = "https://eece-451-project.onrender.com ";
 
 document.addEventListener('keydown', function(e){
     if(e.key==='Enter') login();
@@ -212,30 +212,21 @@ async function login(){
     }
 
     try {
-        var response = await fetch(SERVER_BASE_URL+'/login',{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({username:username,password:password})
-        });
-
-        var text = await response.text();
-        var data;
-
-        try {
-            data = JSON.parse(text);
-        } catch {
-            setError('Server did not return JSON');
-            return;
-        }
-
-        if (data.response === 'ok') {window.location.href = '/dashboard'};
-        else if (data.response==='user') setError('Wrong username');
-        else if (data.response==='pass') setError('Wrong password');
-        else setError('Unexpected server response');
-
-    } catch(e){
-        setError('Cannot connect to server');
+        var response = await ffetch('/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: username, password: password })
+})
+.then(function(r) { return r.json(); })
+.then(function(data) {
+    if (data.response === 'ok') {
+        window.location.href = '/dashboard';  // cookie already set by server
+    } else if (data.response === 'user') {
+        // show "invalid username" error
+    } else if (data.response === 'pass') {
+        // show "wrong password" error
     }
+});
 }
 </script>
 
