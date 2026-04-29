@@ -239,3 +239,24 @@ fun readMeasurementFromPhone(context: Context, deviceId: String): MeasurementReq
 
     return null
 }
+fun getBandName(band: Int?): String {
+    if (band == null) return "--"
+    return when (band) {
+        1 -> "Band 1 (2100 MHz)"
+        2 -> "Band 2 (1900 MHz)"
+        3 -> "Band 3 (1800 MHz)"
+        4 -> "Band 4 (1700 MHz)"
+        5 -> "Band 5 (850 MHz)"
+        7 -> "Band 7 (2600 MHz)"
+        8 -> "Band 8 (900 MHz)"
+        12 -> "Band 12 (700 MHz)"
+        13 -> "Band 13 (700 MHz)"
+        17 -> "Band 17 (700 MHz)"
+        20 -> "Band 20 (800 MHz)"
+        28 -> "Band 28 (700 MHz)"
+        38 -> "Band 38 (2600 MHz)"
+        40 -> "Band 40 (2300 MHz)"
+        41 -> "Band 41 (2500 MHz)"
+        else -> "Band $band"
+    }
+}
