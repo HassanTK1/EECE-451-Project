@@ -25,6 +25,7 @@ import com.example.a451_app.network.RetrofitClient
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import com.example.a451_app.getBandName
 
 class MainActivity : AppCompatActivity() {
 
@@ -129,10 +130,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateSignalGrade(signalPower: Int) {
         val (grade, label, colorRes) = when {
-            signalPower > -70  -> Triple("A", "Excellent", R.color.accent_green)
-            signalPower > -85  -> Triple("B", "Good",      R.color.accent_light_green)
-            signalPower > -100 -> Triple("C", "Fair",      R.color.accent_orange)
-            else               -> Triple("D", "Poor",      R.color.accent_red)
+            signalPower > -70 -> Triple("A", "Excellent", R.color.accent_green)
+            signalPower > -85 -> Triple("B", "Good", R.color.accent_light_green)
+            signalPower > -100 -> Triple("C", "Fair", R.color.accent_orange)
+            else -> Triple("D", "Poor", R.color.accent_red)
         }
         val color = ContextCompat.getColor(this, colorRes)
         tvSignalGrade.text = grade
@@ -145,10 +146,14 @@ class MainActivity : AppCompatActivity() {
         val request = IdentificationRequest(device_id = deviceId, mac_address = null)
         RetrofitClient.apiService.identifyDevice(request)
             .enqueue(object : Callback<IdentificationResponse> {
-                override fun onResponse(call: Call<IdentificationResponse>, response: Response<IdentificationResponse>) {
+                override fun onResponse(
+                    call: Call<IdentificationResponse>,
+                    response: Response<IdentificationResponse>
+                ) {
                     if (hasRequiredPermissions()) measurementHandler.post(measurementRunnable)
                     else requestRequiredPermissions()
                 }
+
                 override fun onFailure(call: Call<IdentificationResponse>, t: Throwable) {
                     if (hasRequiredPermissions()) measurementHandler.post(measurementRunnable)
                     else requestRequiredPermissions()
@@ -162,7 +167,11 @@ class MainActivity : AppCompatActivity() {
         measurementHandler.removeCallbacks(measurementRunnable)
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == 100 && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
             measurementHandler.post(measurementRunnable)
@@ -178,9 +187,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun sendMeasurementToServer(measurement: MeasurementRequest) {
+        android.util.Log.d(
+            "SEND_DEBUG",
+            "Sending measurement: lat=${measurement.latitude}, lon=${measurement.longitude}, body=$measurement"
+        )
         RetrofitClient.apiService.sendMetrics(deviceId, measurement)
             .enqueue(object : Callback<MeasurementResponse> {
-                override fun onResponse(call: Call<MeasurementResponse>, response: Response<MeasurementResponse>) {}
+                override fun onResponse(
+                    call: Call<MeasurementResponse>,
+                    response: Response<MeasurementResponse>
+                ) {
+                }
+
                 override fun onFailure(call: Call<MeasurementResponse>, t: Throwable) {}
             })
     }
@@ -210,33 +228,58 @@ class MainActivity : AppCompatActivity() {
         tvSignal.text = "${measurement.signal_power} dBm"
         tvSNR.text = measurement.SNR?.toString() ?: "--"
         tvCellid.text = measurement.cell_id
-        tvBand.text = measurement.frequency_band?.toString() ?: "--"
+        tvBand.text = getBandName(measurement.frequency_band)
         updateSignalGrade(measurement.signal_power)
         setBarPercent(signalBarEmpty, signalBarFill, signalToPercent(measurement.signal_power))
         setBarPercent(snrBarEmpty, snrBarFill, measurement.SNR?.let { snrToPercent(it) } ?: 0)
     }
 
     private fun hasRequiredPermissions(): Boolean {
-        return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED
+        return ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.READ_PHONE_STATE
+                ) == PackageManager.PERMISSION_GRANTED
     }
 
     private fun checkHealth() {
         try {
             RetrofitClient.apiService.isHealthy().enqueue(object : Callback<HealthResponse> {
-                override fun onResponse(call: Call<HealthResponse>, response: Response<HealthResponse>) {
+                override fun onResponse(
+                    call: Call<HealthResponse>,
+                    response: Response<HealthResponse>
+                ) {
                     if (response.isSuccessful && response.body()?.status == "ok") {
                         tvServerStatus.text = "ONLINE"
-                        tvServerStatus.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.accent_green))
+                        tvServerStatus.setTextColor(
+                            ContextCompat.getColor(
+                                this@MainActivity,
+                                R.color.accent_green
+                            )
+                        )
                         statusDot.setBackgroundResource(R.drawable.dot_background)
                     } else {
                         tvServerStatus.text = "OFFLINE"
-                        tvServerStatus.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.accent_red))
+                        tvServerStatus.setTextColor(
+                            ContextCompat.getColor(
+                                this@MainActivity,
+                                R.color.accent_red
+                            )
+                        )
                     }
                 }
+
                 override fun onFailure(call: Call<HealthResponse>, t: Throwable) {
                     tvServerStatus.text = "OFFLINE"
-                    tvServerStatus.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.accent_red))
+                    tvServerStatus.setTextColor(
+                        ContextCompat.getColor(
+                            this@MainActivity,
+                            R.color.accent_red
+                        )
+                    )
                 }
             })
         } catch (e: Exception) {
