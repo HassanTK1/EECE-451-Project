@@ -126,8 +126,8 @@ class StatsActivity : AppCompatActivity() {
         updateThemeButtonText()
         btnToggleThemeStats.setOnClickListener { ThemeManager.toggle(this) }
 
-        tvFrom.setOnClickListener { showDatePicker { date -> fromDate = "${date}T00:00:00Z"; tvFrom.text = date } }
-        tvTo.setOnClickListener   { showDatePicker { date -> toDate   = "${date}T23:59:59Z"; tvTo.text   = date } }
+        tvFrom.setOnClickListener { showFromDatePicker() }
+        tvTo.setOnClickListener { showToDatePicker() }
 
         findViewById<Button>(R.id.btnBack).setOnClickListener { finish() }
     }
@@ -151,11 +151,38 @@ class StatsActivity : AppCompatActivity() {
         selected.setBackgroundColor(selectedColor())
     }
 
-    private fun showDatePicker(onDateSelected: (String) -> Unit) {
+    private fun showFromDatePicker() {
         val cal = Calendar.getInstance()
-        DatePickerDialog(this, { _, year, month, day ->
-            onDateSelected("$year-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}")
-        }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
+        val picker = DatePickerDialog(this, { _, year, month, day ->
+            val date = "$year-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}"
+            fromDate = "${date}T00:00:00Z"
+            tvFrom.text = date
+        }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH))
+        // cannot pick future dates
+        picker.datePicker.maxDate = System.currentTimeMillis()
+        picker.show()
+    }
+
+    private fun showToDatePicker() {
+        val cal = Calendar.getInstance()
+        val picker = DatePickerDialog(this, { _, year, month, day ->
+            val date = "$year-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}"
+            toDate = "${date}T23:59:59Z"
+            tvTo.text = date
+        }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH))
+        // cannot pick future dates
+        picker.datePicker.maxDate = System.currentTimeMillis()
+        // cannot pick before From date
+        if (fromDate.isNotBlank()) {
+            val fromCal = Calendar.getInstance()
+            fromCal.set(
+                fromDate.substring(0, 4).toInt(),
+                fromDate.substring(5, 7).toInt() - 1,
+                fromDate.substring(8, 10).toInt()
+            )
+            picker.datePicker.minDate = fromCal.timeInMillis
+        }
+        picker.show()
     }
 
     private fun setSegWeight(view: View, weight: Float) {
@@ -166,11 +193,11 @@ class StatsActivity : AppCompatActivity() {
 
     private fun updateOperatorBar(alfa: Float, touch: Float) {
         val total = alfa + touch
-        val wa = if (total > 0f) alfa  else 1f
+        val wa = if (total > 0f) alfa else 1f
         val wt = if (total > 0f) touch else 1f
-        setSegWeight(segAlfa,  wa)
+        setSegWeight(segAlfa, wa)
         setSegWeight(segTouch, wt)
-        tvAlfaPercent.text  = if (total > 0f) "${(alfa  / total * 100).toInt()}%" else "--"
+        tvAlfaPercent.text = if (total > 0f) "${(alfa / total * 100).toInt()}%" else "--"
         tvTouchPercent.text = if (total > 0f) "${(touch / total * 100).toInt()}%" else "--"
     }
 
@@ -199,7 +226,7 @@ class StatsActivity : AppCompatActivity() {
                     val stats = response.body()!!
 
                     val touch = (stats.avg_connectivity_operator[0] ?: 0.0).toFloat()
-                    val alfa  = (stats.avg_connectivity_operator[1] ?: 0.0).toFloat()
+                    val alfa = (stats.avg_connectivity_operator[1] ?: 0.0).toFloat()
                     updateOperatorBar(alfa, touch)
 
                     val v2g = (stats.avg_connectivity_network[0] ?: 0.0).toFloat()
@@ -209,8 +236,8 @@ class StatsActivity : AppCompatActivity() {
                     updateNetworkBar(v2g, v3g, v4g, v5g)
 
                     avgSignalPowerNetworkType = stats.avg_signal_power_networkType ?: listOf(0.0, 0.0, 0.0, 0.0)
-                    avgSnrNetworkType         = stats.avg_SNR_SNIR               ?: listOf(0.0, 0.0, 0.0, 0.0)
-                    tvAvgSignalDevice.text = (stats.avg_signal_power_device ?: 0.0).toString()
+                    avgSnrNetworkType = stats.avg_SNR_SNIR ?: listOf(0.0, 0.0, 0.0, 0.0)
+                    tvAvgSignalDevice.text = String.format("%.2f", stats.avg_signal_power_device ?: 0.0)
                     updateUI()
                 }
                 override fun onFailure(call: Call<StatsResponse>, t: Throwable) {}
@@ -219,6 +246,6 @@ class StatsActivity : AppCompatActivity() {
 
     private fun updateUI() {
         tvAvgSignal_network.text = String.format("%.2f", avgSignalPowerNetworkType.getOrNull(index) ?: 0.0)
-        tvAvgSNR_network.text    = String.format("%.2f", avgSnrNetworkType.getOrNull(index)         ?: 0.0)
+        tvAvgSNR_network.text = String.format("%.2f", avgSnrNetworkType.getOrNull(index) ?: 0.0)
     }
 }
