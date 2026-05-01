@@ -209,7 +209,7 @@ def logout():
 @app.post("/login")
 def checkCreds(body: Login_request = Body(...)):
     username = body.username
-    password = body.password
+    password = body.password.encode()
 
     if username != "Admin451":
         return {"response": "user"}
