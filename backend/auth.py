@@ -1,7 +1,7 @@
 from jose import jwt
 from datetime import datetime, timedelta
 from fastapi import Request, HTTPException
-
+import os
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 TOKEN_EXPIRE_HOURS = 12
