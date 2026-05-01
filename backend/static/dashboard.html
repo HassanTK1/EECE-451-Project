@@ -310,10 +310,15 @@ tbody tr:hover td { background: var(--s2); }
                 <div class="nav-label">Server Dashboard</div>
             </div>
         </div>
-        <div class="status-pill" id="statusPill">
-            <span class="status-dot"></span>
-            <span id="statusText">Checking</span>
-        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+    <div class="status-pill" id="statusPill">
+        <span class="status-dot"></span>
+        <span id="statusText">Checking</span>
+    </div>
+    <button id="btnLogout" class="status-pill" style="cursor:pointer;background:transparent;font-family:var(--sans);">
+        Logout
+    </button>
+</div>
     </nav>
 
     <!-- Tab bar -->
@@ -701,6 +706,12 @@ setInterval(function(){
         loadGlobalStats();
     }
 }, 5000);
+
+    document.getElementById('btnLogout').addEventListener('click', function(){
+    fetch('/logout', { method: 'POST' })
+    .then(function(){ window.location.href = '/index'; })
+    .catch(function(){ window.location.href = '/index'; });
+});
 </script>
 </body>
 </html>
