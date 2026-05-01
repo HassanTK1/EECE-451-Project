@@ -13,10 +13,10 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 from auth import create_token, require_auth, get_current_user
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+import bcrypt
 
 
-
-Source = "$argon2id$v=19$m=65536"
+ADMIN_PASSWORD_HASH = os.getenv("ADMIN_PASSWORD_HASH").encode() # get the true hash of the password to compare, stored in env for safety
 app = FastAPI()
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -28,23 +28,31 @@ def dashboard(request: Request):
         return RedirectResponse(url="/index", status_code=302)
     with open("static/dashboard.html") as f:
         return f.read()
+    
+
 @app.get("/test")
 def test():
-    return {"ok": True}    
+    return {"ok": True} 
+
+
 @app.get("/index", response_class=HTMLResponse)
 def index():
     with open("static/index.html") as f:
         return f.read()
+    
 
 @app.get("/", response_class=HTMLResponse)
 def root():
     with open("static/index.html") as f:
         return f.read()
-
+    
+# used by app to check server status
 @app.get("/health")
 def health():
     return Health_response(status="ok", time=datetime.now())
 
+
+# used by an application to register for the first time 
 @app.post("/identification")
 def identify(body: Identification_request):
     db = SessionLocal()
@@ -78,6 +86,8 @@ def identify(body: Identification_request):
         last_seen=last_seen,
         first_meet=first_meet)
 
+
+# used to recieve measurements sent by application 
 @app.post("/measurement")
 def resp_measurements(device_id: str, body: Measurements_request):
     db = SessionLocal()
@@ -113,104 +123,10 @@ def resp_measurements(device_id: str, body: Measurements_request):
         server_time=datetime.now()
     )
 
-@app.get("/global_stats")
-def get_global_stats(request: Request):
-    require_auth(request)
-    db = SessionLocal()
-    records = db.query(Measurement).all()
 
-    operator_label = {"touch": 0, "alfa": 1}
-    avg_connectivity_operator = [0, 0]
-    operator_signal_sum = [0, 0]
-    operator_signal_count = [0, 0]
 
-    network_label = {"2G": 0, "3G": 1, "4G": 2, "5G": 3}
-    avg_connectivity_network = [0, 0, 0, 0]
-    avg_signal_power_networkType = [0, 0, 0, 0]
-    network_count = [0, 0, 0, 0]
 
-    avg_signal_power_overall = 0
-    total_count = 0
-
-    for record in records:
-        total_count += 1
-        avg_signal_power_overall += record.signal_power
-
-        if record.operator in operator_label:
-            i = operator_label[record.operator]
-            avg_connectivity_operator[i] += 1
-            operator_signal_sum[i] += record.signal_power
-            operator_signal_count[i] += 1
-
-        if record.network_type in network_label:
-            i = network_label[record.network_type]
-            avg_connectivity_network[i] += 1
-            avg_signal_power_networkType[i] += record.signal_power
-            network_count[i] += 1
-
-    if total_count > 0:
-        avg_connectivity_operator = [c / total_count for c in avg_connectivity_operator]
-        avg_connectivity_network = [c / total_count for c in avg_connectivity_network]
-        avg_signal_power_overall = avg_signal_power_overall / total_count
-    else:
-        avg_signal_power_overall = 0
-
-    operator_avg_signal = []
-    for i in range(2):
-        if operator_signal_count[i] > 0:
-            operator_avg_signal.append(operator_signal_sum[i] / operator_signal_count[i])
-        else:
-            operator_avg_signal.append(0)
-
-    for i in range(4):
-        if network_count[i] > 0:
-            avg_signal_power_networkType[i] = avg_signal_power_networkType[i] / network_count[i]
-        else:
-            avg_signal_power_networkType[i] = 0
-
-    db.close()
-    return {
-        "total_measurements": total_count,
-        "avg_connectivity_operator": avg_connectivity_operator,
-        "avg_connectivity_network": avg_connectivity_network,
-        "avg_signal_power_networkType": avg_signal_power_networkType,
-        "avg_signal_power_operator": operator_avg_signal,
-        "avg_signal_power_overall": avg_signal_power_overall
-    }
-
-@app.get("/connected_coordinates")
-def get_connected_coordinates(request: Request):
-    require_auth(request)
-    db = SessionLocal()
-    now = datetime.now()
-    devices = db.query(Device).all()
-
-    results = []
-    for device in devices:
-        # Only include currently connected devices (matching /devices logic: <30s)
-        if (now - device.last_seen).total_seconds() >= 30:
-            continue
-
-        latest = (
-            db.query(Measurement)
-            .filter(Measurement.device_id == device.device_id)
-            .filter(Measurement.latitude.isnot(None))
-            .filter(Measurement.longitude.isnot(None))
-            .order_by(desc(Measurement.time_stamp))
-            .first()
-        )
-        if latest:
-            results.append({
-                "device_id": device.device_id,
-                "latitude": latest.latitude,
-                "longitude": latest.longitude,
-                "signal_power": latest.signal_power,
-                "network_type": latest.network_type,
-                "time_stamp": latest.time_stamp.isoformat()
-            })
-    db.close()
-    return results
-    
+# sending the requested stats to the app     
 @app.get("/stats")
 def get_stats(device_id: str, from_date: datetime, to_date: datetime):
     db = SessionLocal()
@@ -279,12 +195,43 @@ def get_stats(device_id: str, from_date: datetime, to_date: datetime):
     }
 
 
+
+
+# logout of session 
 @app.post("/logout")
 def logout():
     response = JSONResponse(content={"response": "ok"})
     response.delete_cookie("session_token")
     return response
 
+
+#login to the dashboad
+@app.post("/login")
+def checkCreds(body: Login_request = Body(...)):
+    username = body.username
+    password = body.password
+
+    if username != "Admin451":
+        return {"response": "user"}
+
+    if not bcrypt.checkpw(password, ADMIN_PASSWORD_HASH):
+        return {"response": "pass"}
+
+    token = create_token(username)
+    response = JSONResponse(content={"response": "ok"})
+    response.set_cookie(
+        key="session_token",
+        value=token,
+        httponly=True,       
+        secure=True,        
+        samesite="lax",
+        max_age=43200,
+        path = "/"
+        
+    )
+    return response
+
+# dashboard uses this to get currently connected devices
 @app.get("/devices")
 def get_devices(request: Request):
     require_auth(request)
@@ -307,27 +254,108 @@ def get_devices(request: Request):
         })
     return result
 
-@app.post("/login")
-def checkCreds(body: Login_request = Body(...)):
-    username = body.username
-    password = body.password
 
-    if username != "Admin451":
-        return {"response": "user"}
 
-    if password != "1234":
-        return {"response": "pass"}
 
-    token = create_token(username)
-    response = JSONResponse(content={"response": "ok"})
-    response.set_cookie(
-        key="session_token",
-        value=token,
-        httponly=True,       # JS cannot read the cookie
-        secure=True,        # set True if using HTTPS
-        samesite="lax",
-        max_age=43200,
-        path = "/"
-        # 12 hours
-    )
-    return response
+# used by dashboard for metrics page
+@app.get("/global_stats")
+def get_global_stats(request: Request):
+    require_auth(request)
+    db = SessionLocal()
+    records = db.query(Measurement).all()
+
+    operator_label = {"touch": 0, "alfa": 1}
+    avg_connectivity_operator = [0, 0]
+    operator_signal_sum = [0, 0]
+    operator_signal_count = [0, 0]
+
+    network_label = {"2G": 0, "3G": 1, "4G": 2, "5G": 3}
+    avg_connectivity_network = [0, 0, 0, 0]
+    avg_signal_power_networkType = [0, 0, 0, 0]
+    network_count = [0, 0, 0, 0]
+
+    avg_signal_power_overall = 0
+    total_count = 0
+
+    for record in records:
+        total_count += 1
+        avg_signal_power_overall += record.signal_power
+
+        if record.operator in operator_label:
+            i = operator_label[record.operator]
+            avg_connectivity_operator[i] += 1
+            operator_signal_sum[i] += record.signal_power
+            operator_signal_count[i] += 1
+
+        if record.network_type in network_label:
+            i = network_label[record.network_type]
+            avg_connectivity_network[i] += 1
+            avg_signal_power_networkType[i] += record.signal_power
+            network_count[i] += 1
+
+    if total_count > 0:
+        avg_connectivity_operator = [c / total_count for c in avg_connectivity_operator]
+        avg_connectivity_network = [c / total_count for c in avg_connectivity_network]
+        avg_signal_power_overall = avg_signal_power_overall / total_count
+    else:
+        avg_signal_power_overall = 0
+
+    operator_avg_signal = []
+    for i in range(2):
+        if operator_signal_count[i] > 0:
+            operator_avg_signal.append(operator_signal_sum[i] / operator_signal_count[i])
+        else:
+            operator_avg_signal.append(0)
+
+    for i in range(4):
+        if network_count[i] > 0:
+            avg_signal_power_networkType[i] = avg_signal_power_networkType[i] / network_count[i]
+        else:
+            avg_signal_power_networkType[i] = 0
+
+    db.close()
+    return {
+        "total_measurements": total_count,
+        "avg_connectivity_operator": avg_connectivity_operator,
+        "avg_connectivity_network": avg_connectivity_network,
+        "avg_signal_power_networkType": avg_signal_power_networkType,
+        "avg_signal_power_operator": operator_avg_signal,
+        "avg_signal_power_overall": avg_signal_power_overall
+    }
+
+
+
+# used by dashboard to get all current coordinates 
+@app.get("/connected_coordinates")
+def get_connected_coordinates(request: Request):
+    require_auth(request)
+    db = SessionLocal()
+    now = datetime.now()
+    devices = db.query(Device).all()
+
+    results = []
+    for device in devices:
+        # Only include currently connected devices (matching /devices logic: <30s)
+        if (now - device.last_seen).total_seconds() >= 30:
+            continue
+
+        latest = (
+            db.query(Measurement)
+            .filter(Measurement.device_id == device.device_id)
+            .filter(Measurement.latitude.isnot(None))
+            .filter(Measurement.longitude.isnot(None))
+            .order_by(desc(Measurement.time_stamp))
+            .first()
+        )
+        if latest:
+            results.append({
+                "device_id": device.device_id,
+                "latitude": latest.latitude,
+                "longitude": latest.longitude,
+                "signal_power": latest.signal_power,
+                "network_type": latest.network_type,
+                "time_stamp": latest.time_stamp.isoformat()
+            })
+    db.close()
+    return results
+
